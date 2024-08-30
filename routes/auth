@@ -1,0 +1,15 @@
+import { Router } from "express";
+
+const router = Router();
+
+router.post("/register", (req, res) => {
+  console.log("register");
+  res.status(200).json({ message: "register" });
+});
+
+router.post("/login", (req, res) => {
+  console.log("login");
+  res.status(200).json({ message: "login" });
+});
+
+export default router;
