@@ -1,0 +1,36 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/marcosgomesneto/bun-devcontainers/tree/main/src/bun-postgresql
+{
+  "name": "Dataviz-Srv",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      // Add the IDs of extensions you want installed when the container is created.
+      "extensions": [
+        "oven.bun-vscode",
+        "cweijan.vscode-postgresql-client2",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "Prisma.prisma"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll": true,
+          "source.fixAll.eslint": true,
+          "source.organizeImports": true,
+          "addMissingImports": true
+        },
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "[prisma]": {
+          "editor.defaultFormatter": "Prisma.prisma"
+        }
+      }
+    }
+  },
+  "postCreateCommand": "sh .devcontainer/postCreateCommand.sh"
+}
