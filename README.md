@@ -1,4 +1,4 @@
-# serverino
+# Dataviz chart server
 
 To install dependencies:
 
