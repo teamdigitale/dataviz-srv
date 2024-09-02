@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import * as jwt from "jsonwebtoken";
-import { User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import type { Response } from "express";
 
 const JWT_SECRET = process?.env["JWT_SECRET"] || "";
@@ -24,7 +24,7 @@ export function generateAccessToken(
   });
 }
 
-export function generateTokens(user: User, jti: string) {
+export function generateTokens(user: User) {
   const accessTokenPayload: IAccessTokenPayload = {
     userId: user.id,
   };

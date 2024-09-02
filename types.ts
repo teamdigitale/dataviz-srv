@@ -24,3 +24,8 @@ export interface TokensResponseInterface {
   access_token: string;
   refresh_token?: string;
 }
+
+export interface ParsedToken {
+  exp: number;
+  userId: string;
+}
