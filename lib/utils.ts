@@ -1,3 +1,3 @@
 export function generatePin() {
-  return Math.random().toString().substr(2, 6);
+  return Math.random().toString().slice(2, 8);
 }

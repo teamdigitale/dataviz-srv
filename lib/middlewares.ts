@@ -46,11 +46,7 @@ export function validateRequest(validators: RequestValidators) {
   };
 }
 
-export function deserializeUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
+export function deserializeUser(req: any, res: Response, next: NextFunction) {
   try {
     const accessToken = (req.headers.authorization || "").replace(
       /^Bearer\s/,
@@ -68,7 +64,7 @@ export function deserializeUser(
   }
 }
 
-export function requireUser(req: Request, res: Response, next: NextFunction) {
+export function requireUser(req: any, res: Response, next: NextFunction) {
   try {
     const user = req.user;
 
