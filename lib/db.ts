@@ -46,3 +46,35 @@ export function findChartByUSerId(id: User["id"]) {
     },
   });
 }
+
+export function createChart(data: Prisma.ChartCreateInput) {
+  return prisma.chart.create({ data });
+}
+
+export function publishChart(id: Chart["id"], publish: boolean) {
+  return prisma.chart.update({
+    where: {
+      id,
+    },
+    data: {
+      publish,
+    },
+  });
+}
+
+export function updateChart(id: Chart["id"], data: Prisma.ChartUpdateInput) {
+  return prisma.chart.update({
+    where: {
+      id,
+    },
+    data,
+  });
+}
+
+export function deleteChart(id: Chart["id"]) {
+  return prisma.chart.delete({
+    where: {
+      id,
+    },
+  });
+}
