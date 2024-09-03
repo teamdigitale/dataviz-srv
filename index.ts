@@ -6,7 +6,7 @@ import * as middlewares from "./lib/middlewares";
 import authRouter from "./routes/auth.ts";
 import chartRouter from "./routes/charts.ts";
 // import seedUsers from "./seeds/seed-users.ts";
-// import * as db from "./lib/db.ts";
+import * as db from "./lib/db.ts";
 
 const app = express();
 app.use(helmet());
@@ -24,15 +24,16 @@ app.get("/", (req, res) => {
 //   const result = seedUsers();
 //   res.json({ result });
 // });
-// app.get("/users", async (req, res) => {
-//   const results = await db.getUsers();
-//   res.json(
-//     results.map((user: any) => {
-//       delete user.password;
-//       return user;
-//     })
-//   );
-// });
+
+app.get("/users", async (req, res) => {
+  const results = await db.getUsers();
+  res.json(
+    results.map((user: any) => {
+      delete user.password;
+      return user;
+    })
+  );
+});
 
 app.use("/auth", authRouter as Router);
 app.use("/charts", chartRouter as Router);

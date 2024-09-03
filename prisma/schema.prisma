@@ -24,11 +24,12 @@ model User {
 
 model Chart {
   id          String   @id @default(cuid())
-  title       String
-  description String
-  config      Json
-  data        Json
-  favourite   Boolean
+  name        String?
+  description String?  @default("")
+  chart       String
+  config      Json?
+  data        Json?
+  publish     Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
