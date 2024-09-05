@@ -11,8 +11,8 @@ COPY . .
 
 RUN bun install
 
-USER bun
+RUN bun install pm2 -g
 
 EXPOSE 3003/tcp
 
-CMD ["bun", "run" ,"index.ts" ]
+CMD ["pm2-runtime", "start", "--interpreter", "/usr/local/bin/bun", "index.ts"]
