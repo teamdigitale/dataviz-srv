@@ -39,7 +39,7 @@ export function findChartById(id: Chart["id"]) {
   });
 }
 
-export function findChartByUSerId(id: User["id"]) {
+export function findChartsByUSerId(id: User["id"]) {
   return prisma.chart.findMany({
     where: {
       userId: id,
