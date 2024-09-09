@@ -1,0 +1,59 @@
+# Dockerfile
+# https://dev.to/andrews1022/build-an-express-app-using-bun-and-deploy-it-to-render-with-docker-3o04
+# use the official Bun image
+# see all versions at https://hub.docker.com/r/oven/bun/tags
+FROM oven/bun:1 as base
+
+# why Node? A: https://github.com/oven-sh/bun/issues/4848
+RUN apt update \
+    && apt install -y curl
+
+ARG NODE_VERSION=20
+RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+    && bash n $NODE_VERSION \
+    && rm n \
+    && npm install -g n    
+
+WORKDIR /usr/src/app
+
+# install dependencies into temp folder
+# this will cache them and speed up future builds
+FROM base AS install
+# install with --production (exclude devDependencies)
+RUN mkdir -p /temp/prod
+COPY package.json bun.lockb /temp/prod/
+RUN cd /temp/prod && bun install --frozen-lockfile --production
+RUN bun add -g pm2
+# Install pm2 for the bun user
+# RUN su bun -c "bun add -g pm2"
+# RUN ls -lah $(which pm2-runtime) && sleep 33
+
+# copy node_modules from temp folder
+# then copy all (non-ignored) project files into the image
+FROM install AS prerelease
+COPY --from=install /temp/prod/node_modules node_modules
+COPY . .
+# node setup
+RUN apt update \
+    && apt install -y curl
+ARG NODE_VERSION=20
+RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+    && bash n $NODE_VERSION \
+    && rm n \
+    && npm install -g n    
+
+RUN npx prisma generate
+
+# copy production dependencies and source code into final image
+FROM base AS release
+COPY --from=prerelease /usr/src/app/node_modules ./node_modules
+COPY --from=prerelease /usr/src/app/index.ts .
+COPY --from=prerelease /usr/src/app/lib ./lib
+COPY --from=prerelease /usr/src/app/routes ./routes
+COPY --from=prerelease /usr/src/app/package.json .
+
+# run the app
+USER bun
+EXPOSE 3003/tcp
+# RUN echo $PATH && ls -lah $(which pm2-runtime) && sleep 15
+CMD ["pm2-runtime", "start", "--interpreter", "/usr/local/bin/bun", "index.ts"]
