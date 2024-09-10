@@ -6,12 +6,16 @@ export const paramsWithIdSchema = z.object({
 
 export type ParamsWithId = z.infer<typeof paramsWithIdSchema>;
 
-export interface MessageResponse {
-  message: string;
+export interface ErrorResponse {
+  error: {
+    stack?: string;
+    message: string;
+  };
 }
 
-export interface ErrorResponse extends MessageResponse {
-  stack?: string;
+export interface ServerResponse {
+  data?: any;
+  error?: ErrorResponse;
 }
 
 export interface RequestValidators {
