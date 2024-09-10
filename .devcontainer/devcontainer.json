@@ -19,6 +19,7 @@
         "cweijan.vscode-postgresql-client2",
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
+        "github.vscode-pull-request-github",
         "Prisma.prisma"
       ],
       "settings": {
