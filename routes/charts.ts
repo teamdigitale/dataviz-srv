@@ -4,6 +4,7 @@ import * as z from "zod";
 import { requireUser } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
 import { validateRequest } from "../lib/middlewares";
+import { convertToObject } from "typescript";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ const createChartSchema = z.object({
   }),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
+  publish: z.boolean().optional(),
 });
 
 // INDEX
@@ -28,10 +30,8 @@ router.get("/", requireUser, async (req: any, res, next) => {
   try {
     const user: ParsedToken = req.user;
     const id = user.userId;
-    const result = await db.findChartByUSerId(id);
-    res.json({
-      result,
-    });
+    const results = await db.findChartsByUSerId(id);
+    res.json(results);
   } catch (err) {
     next(err);
   }
@@ -86,9 +86,12 @@ router.post(
         userId: user.userId,
         ...body,
       };
+      console.log(chartData);
       const result = await db.createChart(chartData);
+
       return res.json({ result });
     } catch (err) {
+      console.log(err);
       next(err);
     }
   }
@@ -119,7 +122,7 @@ router.post(
 
 // DELETE
 router.delete(
-  "/publish/:id",
+  "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
   async (req: any, res: any, next: any) => {
     try {
