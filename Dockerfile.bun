@@ -1,8 +1,3 @@
-# Dockerfile
-# https://dev.to/andrews1022/build-an-express-app-using-bun-and-deploy-it-to-render-with-docker-3o04
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-
 # BASE Stage
 FROM oven/bun:1 AS base
 
@@ -37,15 +32,6 @@ RUN cd /temp/prod && bun install --frozen-lockfile --production
 FROM install AS prerelease
 COPY --from=install /temp/prod/node_modules node_modules
 COPY . .
-# node setup
-RUN apt update \
-    && apt install -y curl
-ARG NODE_VERSION=20
-RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
-    && bash n $NODE_VERSION \
-    && rm n \
-    && npm install -g n    
-
 RUN npx prisma generate
 
 # RELEASE Stage
@@ -60,4 +46,3 @@ COPY --from=prerelease /usr/src/app/package.json .
 # run the app
 EXPOSE 3003/tcp
 CMD ["pm2-runtime", "start", "--interpreter", "/usr/local/bin/bun", "index.ts"]
-# CMD ["bun", "index.ts"]
