@@ -47,9 +47,7 @@ router.get(
       const user: ParsedToken = req.user;
       const { data } = req.body;
       const result = await db.findChartById(id);
-      res.json({
-        result,
-      });
+      res.json(result);
       return res.json({ user, data });
     } catch (err) {
       next(err);
@@ -89,7 +87,7 @@ router.post(
       console.log(chartData);
       const result = await db.createChart(chartData);
 
-      return res.json({ result });
+      return res.json(result);
     } catch (err) {
       console.log(err);
       next(err);
