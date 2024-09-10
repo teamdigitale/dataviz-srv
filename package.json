@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --hot index.ts",
-    "seed": "ts-node --esm ./seeds/add-users.ts",
-    "generate": "ts-node --esm ./seeds/add-users.ts"
+    "seed": "ts-node --esm ./seeds/add-users.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -13,9 +12,7 @@
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^22.0.0",
-    "prisma": "^5.19.1",
-    "ts-node": "^10.9.2"
+    "@types/node": "^22.0.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
