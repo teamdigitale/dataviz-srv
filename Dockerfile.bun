@@ -1,7 +1,7 @@
 # BASE Stage
 FROM oven/bun:1 AS base
 
-# why Node? A: https://github.com/oven-sh/bun/issues/4848
+# setup all global artifacts. why Node? A: https://github.com/oven-sh/bun/issues/4848
 RUN apt update \
     && apt install -y curl
 
@@ -17,18 +17,15 @@ WORKDIR /usr/src/app
 
 # INSTALL Stage
 
-# install dependencies into temp folder
-# this will cache them and speed up future builds
+# install dependencies into temp folder. this will cache them and speed up future builds
 FROM base AS install
-# install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
 COPY package.json bun.lockb /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 
 # PRERELEASE Stage
 
-# copy node_modules from temp folder
-# then copy all (non-ignored) project files into the image
+# copy node_modules from temp folder. then copy all (non-ignored) project files into the image
 FROM install AS prerelease
 COPY --from=install /temp/prod/node_modules node_modules
 COPY . .
