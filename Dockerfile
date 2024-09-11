@@ -11,8 +11,6 @@ RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
     && rm n \
     && npm install -g n   
     
-RUN bun install pm2 -g
-
 WORKDIR /usr/src/app
 
 # INSTALL Stage
@@ -41,5 +39,6 @@ COPY --from=prerelease /usr/src/app/routes ./routes
 COPY --from=prerelease /usr/src/app/package.json .
 
 # run the app
+USER bun
 EXPOSE 3003/tcp
-CMD ["pm2-runtime", "start", "--interpreter", "/usr/local/bin/bun", "index.ts"]
+CMD ["bun", "run", "index.ts"]
