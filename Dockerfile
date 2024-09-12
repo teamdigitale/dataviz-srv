@@ -11,20 +11,24 @@ RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
     && rm n \
     && npm install -g n   
     
-WORKDIR /usr/src/app
 
 # INSTALL Stage
 
 # install dependencies into temp folder. this will cache them and speed up future builds
 FROM base AS install
 RUN mkdir -p /temp/prod
-COPY package.json bun.lockb /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+WORKDIR /temp/prod/
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile --production
+
 
 # PRERELEASE Stage
 
 # copy node_modules from temp folder. then copy all (non-ignored) project files into the image
 FROM install AS prerelease
+
+WORKDIR /usr/src/app
+
 COPY --from=install /temp/prod/node_modules node_modules
 COPY . .
 RUN npx prisma generate
