@@ -16,7 +16,6 @@ RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
 
 # install dependencies into temp folder. this will cache them and speed up future builds
 FROM base AS install
-RUN mkdir -p /temp/prod
 WORKDIR /temp/prod/
 COPY package.json bun.lockb ./
 RUN bun install --frozen-lockfile --production
