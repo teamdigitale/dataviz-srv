@@ -44,6 +44,9 @@ export function findChartsByUSerId(id: User["id"]) {
     where: {
       userId: id,
     },
+    orderBy: {
+      updatedAt: "desc",
+    },
   });
 }
 

@@ -25,7 +25,17 @@ const createChartSchema = z.object({
   publish: z.boolean().optional(),
 });
 
-// INDEX
+const updateChartSchema = z.object({
+  name: z.string().optional(),
+  description: z.string().optional(),
+  chart: z.string().optional(),
+  config: z.unknown().optional(),
+  data: z.unknown().optional(),
+  publish: z.boolean().optional(),
+  id: z.string().optional(),
+});
+
+/** Index */
 router.get("/", requireUser, async (req: any, res, next) => {
   try {
     const user: ParsedToken = req.user;
@@ -37,7 +47,7 @@ router.get("/", requireUser, async (req: any, res, next) => {
   }
 });
 
-// GET
+/** Get :ID */
 router.get(
   "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
@@ -55,7 +65,7 @@ router.get(
   }
 );
 
-// SHOW
+/** Show :ID */
 router.get(
   "/show/:id",
   validateRequest({ params: detailSchema }),
@@ -73,6 +83,7 @@ router.get(
   }
 );
 
+/** Create */
 router.post(
   "/",
   [validateRequest({ body: createChartSchema }), requireUser],
@@ -95,7 +106,7 @@ router.post(
   }
 );
 
-// PUBLISH
+/** Publish */
 router.post(
   "/publish/:id",
   [validateRequest({ params: detailSchema }), requireUser],
@@ -118,7 +129,7 @@ router.post(
   }
 );
 
-// DELETE
+/** Delete ID */
 router.delete(
   "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
@@ -141,7 +152,7 @@ router.delete(
   }
 );
 
-// UPDATE
+/** Update ID */
 router.put(
   "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
@@ -156,8 +167,8 @@ router.put(
       if (chart.userId !== user.userId) {
         return res.json({ message: "Not Authorized" }).status(401);
       }
-      const { data } = req.body;
-      const result = await db.updateChart(chartId, data);
+      const chartData = req.body;
+      const result = await db.updateChart(chartId, chartData);
       return res.json(result);
     } catch (err) {
       next(err);

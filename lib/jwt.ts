@@ -5,7 +5,7 @@ import type { Response } from "express";
 
 const JWT_SECRET = process?.env["JWT_SECRET"] || "";
 // const EXPIRE = 60; //seconds
-const EXPIRE = "1d";
+const EXPIRE = "7d";
 
 export interface IAccessTokenPayload {
   userId: User["id"];
