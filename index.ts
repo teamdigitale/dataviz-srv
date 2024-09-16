@@ -2,7 +2,7 @@ import express, { Router } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import * as middlewares from "./lib/middlewares";
+import * as middlewares from "./lib/middlewares.ts";
 import authRouter from "./routes/auth.ts";
 import chartRouter from "./routes/charts.ts";
 // import seedUsers from "./seeds/seed-users.ts";
@@ -43,3 +43,5 @@ app.use(middlewares.errorHandler);
 app.listen(port, () => {
   console.log(`Listening on port ${port}...`);
 });
+
+export default app;
