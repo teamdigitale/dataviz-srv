@@ -20,10 +20,11 @@ app.get("/", (req, res) => {
   res.json("Hello World!");
 });
 
-// app.get("/seed", (req, res) => {
-//   const result = seedUsers();
-//   res.json({ result });
-// });
+/*
+app.get("/seed", (req, res) => {
+  const result = seedUsers();
+  res.json({ result });
+});
 
 app.get("/users", async (req, res) => {
   const results = await db.getUsers();
@@ -34,6 +35,7 @@ app.get("/users", async (req, res) => {
     })
   );
 });
+*/
 
 app.use("/auth", authRouter as Router);
 app.use("/charts", chartRouter as Router);
