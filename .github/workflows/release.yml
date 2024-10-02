@@ -2,9 +2,10 @@ name: ci
 
 on:
   push:
+
 permissions:
   # To upload archives as GitHub Releases
-  #   contents: write
+  contents: write
   # To push Docker images to GitHub
   packages: write
 
