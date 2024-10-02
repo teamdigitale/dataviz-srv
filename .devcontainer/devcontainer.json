@@ -34,6 +34,15 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "[prisma]": {
           "editor.defaultFormatter": "Prisma.prisma"
+        },
+        "[yaml]": {
+          "editor.autoIndent": "advanced"
+        },
+        "[dockercompose]": {
+          "editor.autoIndent": "advanced"
+        },
+        "[github-actions-workflow]": {
+          "editor.autoIndent": "advanced"
         }
       }
     }
