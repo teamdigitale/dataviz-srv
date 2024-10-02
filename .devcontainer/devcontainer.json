@@ -20,6 +20,7 @@
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
         "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
         "Prisma.prisma"
       ],
       "settings": {
@@ -33,6 +34,15 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "[prisma]": {
           "editor.defaultFormatter": "Prisma.prisma"
+        },
+        "[yaml]": {
+          "editor.autoIndent": "advanced"
+        },
+        "[dockercompose]": {
+          "editor.autoIndent": "advanced"
+        },
+        "[github-actions-workflow]": {
+          "editor.autoIndent": "advanced"
         }
       }
     }
