@@ -20,6 +20,7 @@
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
         "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
         "Prisma.prisma"
       ],
       "settings": {
