@@ -41,7 +41,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            teamdigitale/dataviz-srv:latest
-            teamdigitale/dataviz-srv:0.0.1
             ghcr.io/teamdigitale/dataviz-srv:latest
             ghcr.io/teamdigitale/dataviz-srv:0.0.1
