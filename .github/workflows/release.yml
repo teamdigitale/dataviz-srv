@@ -31,11 +31,11 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          file: "{{context}}/Dockerfile.app"
+          file: "{{defaultContext}}/Dockerfile.app"
           platforms: linux/amd64
           push: true
           tags: |
-            user/app:latest
-            user/app:1.0.0
-            ghcr.io/user/app:latest
-            ghcr.io/user/app:1.0.0
+            teamdigitale/dataviz-srv:latest
+            teamdigitale/dataviz-srv:0.0.1
+            ghcr.io/teamdigitale/dataviz-srv:latest
+            ghcr.io/teamdigitale/dataviz-srv:0.0.1
