@@ -1,12 +1,13 @@
-name: ci
+name: release
 
 on:
   push:
     # branches: [main]
+    # for future develpments
+    # tags:
+    #   - v*
 
 permissions:
-  # To upload archives as GitHub Releases
-  # contents: write
   # To push Docker images to GitHub
   packages: write
 
