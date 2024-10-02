@@ -37,7 +37,7 @@ jobs:
         with:
           file: "Dockerfile.app"
           platforms: linux/amd64
-          push: true
+          push: false
           tags: |
             ghcr.io/teamdigitale/dataviz-srv:latest
             ghcr.io/teamdigitale/dataviz-srv:0.0.1
