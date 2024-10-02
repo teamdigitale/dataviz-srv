@@ -31,7 +31,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          file: "{context}/Dockerfile.app"
+          file: "{{context}}/Dockerfile.app"
           platforms: linux/amd64
           push: true
           tags: |
