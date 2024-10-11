@@ -2,9 +2,7 @@ name: pull-request
 
 on:
   push:
-    # branches: [main]
-    branches:
-      - "**"
+    branches: [main]
     tags:
       - "v*"
   pull_request:
