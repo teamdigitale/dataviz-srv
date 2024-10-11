@@ -7,9 +7,8 @@ on:
     # branches: [main]
   pull_request:
     branches: [main]
-    # for future develpments
-    # tags:
-    #   - v*
+      tags:
+        - v*
 
 permissions:
   # To push Docker images to GitHub
