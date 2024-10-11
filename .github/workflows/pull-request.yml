@@ -2,13 +2,13 @@ name: pull-request
 
 on:
   push:
+    # branches: [main]
     branches:
       - "**"
-    # branches: [main]
+    tags:
+      - v*
   pull_request:
     branches: [main]
-      tags:
-        - v*
 
 permissions:
   # To push Docker images to GitHub
