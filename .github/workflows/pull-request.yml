@@ -5,10 +5,10 @@ on:
     # branches: [main]
     branches:
       - "**"
-    tags:
-      - v*
-  pull_request:
-    branches: [main]
+  #   tags:
+  #     - v*
+  # pull_request:
+  #   branches: [main]
 
 permissions:
   # To push Docker images to GitHub
@@ -49,8 +49,9 @@ jobs:
         with:
           file: "Dockerfile.app"
           platforms: linux/amd64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           # tags: |
           #   ghcr.io/teamdigitale/dataviz-srv:latest
           #   ghcr.io/teamdigitale/dataviz-srv:0.0.1
