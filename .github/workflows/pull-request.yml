@@ -2,6 +2,8 @@ name: pull-request
 
 on:
   push:
+    branches:
+      - "**"
     # branches: [main]
   pull_request:
     branches: [main]
@@ -26,7 +28,6 @@ jobs:
             ghcr.io/teamdigitale/dataviz-srv:
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=schedule
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
