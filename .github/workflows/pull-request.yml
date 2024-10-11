@@ -27,6 +27,8 @@ jobs:
             ghcr.io/teamdigitale/dataviz-srv:
           # generate Docker tags based on the following events/attributes
           tags: |
+            type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
       - name: Set up QEMU
@@ -53,6 +55,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # tags: |
-          #   ghcr.io/teamdigitale/dataviz-srv:latest
-          #   ghcr.io/teamdigitale/dataviz-srv:0.0.1
