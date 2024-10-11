@@ -28,7 +28,7 @@ jobs:
             ghcr.io/teamdigitale/dataviz-srv:
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=sha
+            type=semver,pattern={{version}}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
