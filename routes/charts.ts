@@ -1,10 +1,11 @@
 import { Router } from "express";
 import * as db from "../lib/db";
 import * as z from "zod";
+import axios from "axios";
+
 import { requireUser } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
 import { validateRequest } from "../lib/middlewares";
-import { convertToObject } from "typescript";
 
 const router = Router();
 
@@ -22,6 +23,8 @@ const createChartSchema = z.object({
   }),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
+  remoteUrl: z.string().optional(),
+  isRemote: z.boolean().optional(),
   publish: z.boolean().optional(),
 });
 
@@ -32,6 +35,8 @@ const updateChartSchema = z.object({
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   publish: z.boolean().optional(),
+  remoteUrl: z.string().optional(),
+  isRemote: z.boolean().optional(),
   id: z.string().optional(),
 });
 
@@ -72,9 +77,30 @@ router.get(
   async (req: any, res, next) => {
     try {
       const id = req.params.id;
-      const result = await db.findChartById(id);
+      let result = await db.findChartById(id);
       if (result?.publish !== true) {
-        return res.json({ message: "Not Published" }).status(401);
+        return res.json({
+          error: { message: "Not Authorized, This chart is not public" },
+        });
+      }
+      console.log("chart name", result?.name);
+      console.log("Remote", result?.isRemote, result?.remoteUrl);
+      if (result?.isRemote && result?.remoteUrl) {
+        const lastUpdate = new Date(result.updatedAt);
+        const now = Date.now();
+        const diff = now - lastUpdate.getTime();
+        console.log("Diff", diff / 1000 / 60, "minutes");
+        const isToUpdate = true; // diff > 1000 * 60 * 60 * 24;
+        if (isToUpdate) {
+          //update data.
+          console.log("Updating remote data");
+          const remote = await axios.get(result.remoteUrl);
+          if (remote.data) {
+            console.log("Remote data", remote.data);
+            await db.updateChart(id, { data: remote.data });
+            result = await db.findChartById(id);
+          }
+        }
       }
       return res.json(result);
     } catch (err) {
@@ -155,7 +181,11 @@ router.delete(
 /** Update ID */
 router.put(
   "/:id",
-  [validateRequest({ params: detailSchema }), requireUser],
+  [
+    validateRequest({ body: updateChartSchema }),
+    validateRequest({ params: detailSchema }),
+    requireUser,
+  ],
   async (req: any, res: any, next: any) => {
     try {
       const user: ParsedToken = req.user;
@@ -167,7 +197,9 @@ router.put(
       if (chart.userId !== user.userId) {
         return res.json({ message: "Not Authorized" }).status(401);
       }
+      console.log("Updating chart", chartId);
       const chartData = req.body;
+      console.log("Chart Data", chartData);
       const result = await db.updateChart(chartId, chartData);
       return res.json(result);
     } catch (err) {

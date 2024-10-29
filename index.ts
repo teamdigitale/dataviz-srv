@@ -6,7 +6,7 @@ import * as middlewares from "./lib/middlewares.ts";
 import authRouter from "./routes/auth.ts";
 import chartRouter from "./routes/charts.ts";
 // import seedUsers from "./seeds/seed-users.ts";
-import * as db from "./lib/db.ts";
+// import * as db from "./lib/db.ts";
 
 const app = express();
 app.use(helmet());
