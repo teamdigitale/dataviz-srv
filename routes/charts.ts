@@ -83,14 +83,12 @@ router.get(
           error: { message: "Not Authorized, This chart is not public" },
         });
       }
-      console.log("chart name", result?.name);
-      console.log("Remote", result?.isRemote, result?.remoteUrl);
       if (result?.isRemote && result?.remoteUrl) {
         const lastUpdate = new Date(result.updatedAt);
         const now = Date.now();
         const diff = now - lastUpdate.getTime();
         console.log("Diff", diff / 1000 / 60, "minutes");
-        const isToUpdate = true; // diff > 1000 * 60 * 60 * 24;
+        const isToUpdate = diff > 1000 * 60 * 60 * 24;
         if (isToUpdate) {
           //update data.
           console.log("Updating remote data");
