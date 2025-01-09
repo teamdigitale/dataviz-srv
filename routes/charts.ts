@@ -23,7 +23,7 @@ const createChartSchema = z.object({
   }),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
-  remoteUrl: z.string().optional(),
+  remoteUrl: z.string().nullable().optional(),
   isRemote: z.boolean().optional(),
   publish: z.boolean().optional(),
 });
@@ -35,7 +35,7 @@ const updateChartSchema = z.object({
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   publish: z.boolean().optional(),
-  remoteUrl: z.string().optional(),
+  remoteUrl: z.string().nullable().optional(),
   isRemote: z.boolean().optional(),
   id: z.string().optional(),
 });
@@ -92,7 +92,7 @@ router.get(
         if (isToUpdate) {
           //update data.
           console.log("Updating remote data");
-          const remote = await axios.get(result.remoteUrl);
+          const remote = await axios.get("" + result.remoteUrl);
           if (remote.data) {
             console.log("Remote data", remote.data);
             await db.updateChart(id, { data: remote.data });
