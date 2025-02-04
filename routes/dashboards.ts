@@ -64,7 +64,7 @@ router.get(
       const id = req.params.id;
       const user: ParsedToken = req.user;
       const { data } = req.body;
-      const result = await db.findChartById(id);
+      const result = await db.findDashboardById(id);
       res.json(result);
       return res.json({ user, data });
     } catch (err) {

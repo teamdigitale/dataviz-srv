@@ -1,6 +1,6 @@
 import * as bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
-import type { User, Chart, Prisma } from "@prisma/client";
+import type { User, Chart, Prisma, Dashboard } from "@prisma/client";
 
 export const prisma = new PrismaClient();
 
@@ -33,6 +33,14 @@ export function findUserById(id: User["id"]) {
 
 export function findChartById(id: Chart["id"]) {
   return prisma.chart.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
+export function findDashboardById(id: Dashboard["id"]) {
+  return prisma.dashboard.findUnique({
     where: {
       id,
     },
