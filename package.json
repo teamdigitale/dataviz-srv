@@ -5,7 +5,7 @@
   "scripts": {
     "start": "bun index.ts",
     "dev": "bun --hot index.ts",
-    "dev:seed": "ts-node --esm ./seeds/add-users.ts"
+    "dev:seed": "ts-node --esm ./seeds/seed-users.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
