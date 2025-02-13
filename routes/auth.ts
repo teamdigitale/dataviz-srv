@@ -2,8 +2,8 @@ import { Router } from "express";
 import * as bcrypt from "bcrypt";
 import * as db from "../lib/db";
 import { generateTokens } from "../lib/jwt";
-import * as z from "zod";
 import { validateRequest } from "../lib/middlewares";
+import * as z from "zod";
 
 const registerSchema = z.object({
   email: z
@@ -34,6 +34,9 @@ router.post(
         throw new Error("Email already in use.");
       }
       const user = await db.createUserByEmailAndPassword({ email, password });
+
+      //@TODO SEND EMAIL TO ACTIVATE USER
+
       const { accessToken } = generateTokens(user);
       res.json({
         accessToken,

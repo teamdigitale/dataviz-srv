@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import * as middlewares from "./lib/middlewares.ts";
 import authRouter from "./routes/auth.ts";
 import chartRouter from "./routes/charts.ts";
+import dashRouter from "./routes/dashboards.ts";
 // import seedUsers from "./seeds/seed-users.ts";
 // import * as db from "./lib/db.ts";
 
@@ -39,6 +40,7 @@ app.get("/users", async (req, res) => {
 
 app.use("/auth", authRouter as Router);
 app.use("/charts", chartRouter as Router);
+app.use("/dashboards", dashRouter as Router);
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
