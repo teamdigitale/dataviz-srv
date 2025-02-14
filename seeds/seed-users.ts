@@ -10,6 +10,10 @@ async function seedUsers() {
       email: "lorezz.me@gmail.com",
       password: "lorezz.me@gmail.com",
     },
+    {
+      email: "vale@com.o",
+      password: "vale@com.o",
+    },
   ];
   for (const item of items) {
     await db.createUserByEmailAndPassword(item);
