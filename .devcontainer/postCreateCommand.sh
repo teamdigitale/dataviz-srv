@@ -9,3 +9,4 @@ chown -R node:node node_modules
 
 echo "Installing Deps"
 bun i
+bun i -g ts-node prisma@5.19.0

@@ -16,9 +16,9 @@
       // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
         "oven.bun-vscode",
-        "cweijan.vscode-postgresql-client2",
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
+        "ckolkman.vscode-postgres",
         "github.vscode-pull-request-github",
         "github.vscode-github-actions",
         "Prisma.prisma"

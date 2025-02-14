@@ -25,7 +25,7 @@ services:
     image: postgres:latest
     restart: unless-stopped
     volumes:
-      - dataviz-postgres-data:/var/lib/postgresql/data
+      - dataviz-db-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
@@ -35,5 +35,5 @@ services:
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
 volumes:
-  dataviz-postgres-data:
+  dataviz-db-data:
   dataviz-srv_node_modules:

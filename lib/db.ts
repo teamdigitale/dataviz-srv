@@ -1,6 +1,6 @@
-import * as bcrypt from "bcrypt";
+import type { Chart, Dashboard, Prisma, User } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
-import type { User, Chart, Prisma, Dashboard } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 export const prisma = new PrismaClient();
 
@@ -88,4 +88,8 @@ export function deleteChart(id: Chart["id"]) {
       id,
     },
   });
+}
+
+export async function disconnect() {
+  return prisma.$disconnect();
 }
