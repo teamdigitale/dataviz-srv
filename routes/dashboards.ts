@@ -123,7 +123,7 @@ router.post(
       console.log(chartData);
       const result = await db.createDashboard(chartData);
 
-      return res.json(result);
+      return res.status(201).json(result);
     } catch (err) {
       console.log(err);
       next(err);
@@ -170,7 +170,7 @@ router.delete(
         return res.json({ message: "Not Authorized" }).status(401);
       }
       const result = await db.deleteDashboard(dashboardId);
-      return res.json(result);
+      return res.status(204).json();
     } catch (err) {
       next(err);
     }
