@@ -120,3 +120,11 @@ export async function updateDashboard(
     data,
   });
 }
+
+export async function deleteDashboard(id: Dashboard["id"]) {
+  return prisma.dashboard.delete({
+    where: {
+      id,
+    },
+  });
+}
