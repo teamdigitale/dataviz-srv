@@ -177,34 +177,34 @@ router.post(
 //   }
 // );
 
-// /** Update ID */
-// router.put(
-//   "/:id",
-//   [
-//     validateRequest({ body: updateDashboardSchema }),
-//     validateRequest({ params: detailSchema }),
-//     requireUser,
-//   ],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const chartId = req.params.id;
-//       const chart = await db.findChartById(chartId);
-//       if (!chart) {
-//         return res.json({ message: "Not Found" }).status(404);
-//       }
-//       if (chart.userId !== user.userId) {
-//         return res.json({ message: "Not Authorized" }).status(401);
-//       }
-//       console.log("Updating chart", chartId);
-//       const chartData = req.body;
-//       console.log("Chart Data", chartData);
-//       const result = await db.updateChart(chartId, chartData);
-//       return res.json(result);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
+/** Update ID */
+router.put(
+  "/:id",
+  [
+    validateRequest({ body: updateDashboardSchema }),
+    validateRequest({ params: detailSchema }),
+    requireUser,
+  ],
+  async (req: any, res: any, next: any) => {
+    try {
+      const user: ParsedToken = req.user;
+      const dashboardId = req.params.id;
+      const dashboard = await db.findDashboardById(dashboardId);
+      if (!dashboard) {
+        return res.json({ message: "Not Found" }).status(404);
+      }
+      if (dashboard.userId !== user.userId) {
+        return res.json({ message: "Not Authorized" }).status(401);
+      }
+      console.log("Updating dashboard", dashboardId);
+      const chartData = req.body;
+      console.log("Dashboard Data", chartData);
+      const result = await db.updateDashboard(dashboardId, chartData);
+      return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 export default router;

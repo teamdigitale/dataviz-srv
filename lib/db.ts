@@ -108,3 +108,15 @@ export async function findDashboardsByUserId(userId: string) {
     },
   });
 }
+
+export async function updateDashboard(
+  id: Dashboard["id"],
+  data: Prisma.DashboardUpdateInput
+) {
+  return prisma.dashboard.update({
+    where: {
+      id,
+    },
+    data,
+  });
+}
