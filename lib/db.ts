@@ -93,3 +93,18 @@ export function deleteChart(id: Chart["id"]) {
 export async function disconnect() {
   return prisma.$disconnect();
 }
+
+export async function createDashboard(data: Prisma.DashboardCreateInput) {
+  return prisma.dashboard.create({ data });
+}
+
+export async function findDashboardsByUserId(userId: string) {
+  return prisma.dashboard.findMany({
+    where: {
+      userId,
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+  });
+}

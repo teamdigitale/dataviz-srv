@@ -1,11 +1,9 @@
 import { Router } from "express";
-import * as db from "../lib/db";
 import * as z from "zod";
-import axios from "axios";
+import * as db from "../lib/db";
 
-import { requireUser } from "../lib/middlewares";
+import { requireUser, validateRequest } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
-import { validateRequest } from "../lib/middlewares";
 
 const router = Router();
 
@@ -18,9 +16,9 @@ const detailSchema = z.object({
 const createDashboardSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  chart: z.string({
-    required_error: "Chart type is required",
-  }),
+  // chart: z.string({
+  //   required_error: "Chart type is required",
+  // }),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   remoteUrl: z.string().nullable().optional(),
@@ -32,7 +30,7 @@ const createDashboardSchema = z.object({
 const updateDashboardSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  chart: z.string().optional(),
+  // chart: z.string().optional(),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   publish: z.boolean().optional(),
@@ -48,7 +46,7 @@ router.get("/", requireUser, async (req: any, res, next) => {
   try {
     const user: ParsedToken = req.user;
     const id = user.userId;
-    const results = await db.findChartsByUSerId(id);
+    const results = await db.findDashboardsByUserId(id);
     res.json(results);
   } catch (err) {
     next(err);
@@ -110,28 +108,28 @@ router.get(
 //   }
 // );
 
-// /** Create */
-// router.post(
-//   "/",
-//   [validateRequest({ body: createDashboardSchema }), requireUser],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const { body } = req;
-//       const chartData = {
-//         userId: user.userId,
-//         ...body,
-//       };
-//       console.log(chartData);
-//       const result = await db.createChart(chartData);
+/** Create */
+router.post(
+  "/",
+  [validateRequest({ body: createDashboardSchema }), requireUser],
+  async (req: any, res: any, next: any) => {
+    try {
+      const user: ParsedToken = req.user;
+      const { body } = req;
+      const chartData = {
+        userId: user.userId,
+        ...body,
+      };
+      console.log(chartData);
+      const result = await db.createDashboard(chartData);
 
-//       return res.json(result);
-//     } catch (err) {
-//       console.log(err);
-//       next(err);
-//     }
-//   }
-// );
+      return res.json(result);
+    } catch (err) {
+      console.log(err);
+      next(err);
+    }
+  }
+);
 
 // /** Publish */
 // router.post(
