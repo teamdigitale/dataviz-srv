@@ -1,4 +1,4 @@
-import { type Dashboard, type Prisma, PrismaClient } from "@prisma/client";
+import { type Dashboard, Prisma, PrismaClient } from "@prisma/client";
 import createRepository from "./repository-factory";
 
 const prisma = new PrismaClient();
