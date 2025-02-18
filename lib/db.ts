@@ -129,14 +129,56 @@ export async function deleteDashboard(id: Dashboard["id"]) {
   });
 }
 
-export async function updateDashboardSlots(
-  id: Dashboard["id"],
-  data: Pick<Prisma.DashboardUpdateInput, "slots">
-) {
-  return prisma.dashboard.update({
+export function findSlotsByDashboardId(id: Dashboard["id"]) {
+  return prisma.dashboard.findUnique({
     where: {
       id,
     },
-    data,
+    include: { slots: true },
   });
+}
+
+type SlotsPayload = {
+  dashboardId: string;
+  chartId: string;
+  settings: Prisma.JsonValue | null;
+  createdAt: Date;
+  updatedAt: Date;
+}[];
+
+export async function updateDashboardSlots(
+  dashboardId: Dashboard["id"],
+  {
+    toCreate,
+    toUpdate,
+    toDelete,
+  }: {
+    toCreate: SlotsPayload;
+    toUpdate: SlotsPayload;
+    toDelete: SlotsPayload;
+  }
+) {
+  const model = prisma.slot;
+
+  const deletes = model.deleteMany({
+    where: {
+      dashboardId,
+    },
+  });
+
+  const creates = model.createMany({
+    data: [...toCreate, ...toUpdate].map((i) => ({
+      ...i,
+      dashboardId,
+      settings: i.settings as Prisma.InputJsonValue,
+    })),
+  });
+
+  return await prisma
+    .$transaction([deletes, creates])
+    .then(([deleteCount, createCount]) => ({
+      delete: deleteCount,
+      create: createCount,
+    }))
+    .catch((r) => console.log("transaction", r));
 }

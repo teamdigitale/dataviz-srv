@@ -1,4 +1,3 @@
-import type { Prisma } from "@prisma/client";
 import * as db from "../lib/db";
 import type { ParsedToken } from "../types";
 
@@ -86,18 +85,68 @@ const deleteById = async (req: any, res: any, next: any) => {
 //#endregion
 
 //#region slots
-type TSlot = Prisma.XOR<
-  Prisma.SlotCreateWithoutDashboardInput,
-  Prisma.SlotUncheckedCreateWithoutDashboardInput
->;
 
-type TUpsert = Prisma.SlotUpsertWithWhereUniqueWithoutDashboardInput;
+function separateCreateAndUpdate<T>(
+  storedSlots: Array<T>,
+  updatedSlots: Array<T>,
+  identityFn: (item: T) => string
+): { toCreate: Array<T>; toUpdate: Array<T> } {
+  const storedMap = new Map(
+    storedSlots.map((slot) => [identityFn(slot), slot])
+  );
+
+  const toCreate: Array<T> = [];
+  const toUpdate: Array<T> = [];
+
+  for (const slot of updatedSlots) {
+    if (storedMap.has(identityFn(slot))) {
+      toUpdate.push(slot); // Exists in stored → Needs update
+    } else {
+      toCreate.push(slot); // New slot → Needs creation
+    }
+  }
+
+  return { toCreate, toUpdate };
+}
+
+function separateCreateUpdateDelete<T>(
+  storedSlots: Array<T>,
+  updatedSlots: Array<T>,
+  identityFn: (item: T) => string
+): { toCreate: Array<T>; toUpdate: Array<T>; toDelete: Array<T> } {
+  const storedMap = new Map(
+    storedSlots.map((slot) => [identityFn(slot), slot])
+  );
+  const updatedMap = new Map(
+    updatedSlots.map((slot) => [identityFn(slot), slot])
+  );
+
+  const toCreate: Array<T> = [];
+  const toUpdate: Array<T> = [];
+  const toDelete: Array<T> = [];
+
+  for (const slot of updatedSlots) {
+    if (storedMap.has(identityFn(slot))) {
+      toUpdate.push(slot); // Exists in both → Needs update
+    } else {
+      toCreate.push(slot); // Only in updatedSlots → Needs creation
+    }
+  }
+
+  for (const slot of storedSlots) {
+    if (!updatedMap.has(identityFn(slot))) {
+      toDelete.push(slot); // Only in storedSlots → Needs deletion
+    }
+  }
+
+  return { toCreate, toUpdate, toDelete };
+}
 
 const updateSlots = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
     const dashboardId = req.params.id;
-    const dashboard = await db.findDashboardById(dashboardId);
+    const dashboard = await db.findSlotsByDashboardId(dashboardId);
     if (!dashboard) {
       return res.json({ message: "Not Found" }).status(404);
     }
@@ -105,30 +154,23 @@ const updateSlots = async (req: any, res: any, next: any) => {
       return res.json({ message: "Not Authorized" }).status(401);
     }
     console.log("Updating dashboard", dashboardId);
+    console.log("Updating dashboard", JSON.stringify(dashboard));
     const dashboardData = req.body;
     console.log("Dashboard Data", dashboardData);
+    const { slots: storedSlots } = dashboard;
+    const { slots: updatedSlots } = dashboardData;
+    const { toCreate, toUpdate, toDelete } = separateCreateUpdateDelete(
+      storedSlots,
+      updatedSlots,
+      (s) => s.chartId
+    );
+
+    console.log(toCreate, toUpdate);
+
     const result = await db.updateDashboardSlots(dashboardId, {
-      ...dashboardData,
-      slots: {
-        upsert: dashboardData.slots.map(
-          (slot: { settings: any; chartId: any }) =>
-            ({
-              settings: slot.settings,
-              chartId: slot.chartId,
-            } satisfies TSlot)
-        ) as TUpsert,
-        // createMany: [
-        //   dashboardData.slots.map((s: any) => ({
-        //     where: {
-        //       // dashboardId_chartId: {
-        //       chartId: s.chartId,
-        //       dashboardId: s.dashboardId,
-        //       // },
-        //     },
-        //     data: s,
-        //   })),
-        // ],
-      } satisfies Prisma.SlotUpdateManyWithoutDashboardNestedInput,
+      toCreate,
+      toUpdate,
+      toDelete,
     });
     return res.json(result);
   } catch (err) {
