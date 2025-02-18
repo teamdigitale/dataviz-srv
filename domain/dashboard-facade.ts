@@ -1,4 +1,4 @@
-import * as db from "../lib/db";
+import * as db from "../repository/dashboard-repository";
 import type { ParsedToken } from "../types";
 
 //#region query
