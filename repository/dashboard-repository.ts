@@ -2,11 +2,11 @@ import { type Dashboard, type Prisma, PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function createDashboard(data: Prisma.DashboardCreateInput) {
+async function create(data: Prisma.DashboardCreateInput) {
   return prisma.dashboard.create({ data });
 }
 
-export function findDashboardById(id: Dashboard["id"]) {
+function findById(id: Dashboard["id"]) {
   return prisma.dashboard.findUnique({
     where: {
       id,
@@ -14,7 +14,7 @@ export function findDashboardById(id: Dashboard["id"]) {
   });
 }
 
-export async function findDashboardsByUserId(userId: string) {
+async function findByUserId(userId: string) {
   return prisma.dashboard.findMany({
     where: {
       userId,
@@ -25,10 +25,7 @@ export async function findDashboardsByUserId(userId: string) {
   });
 }
 
-export async function updateDashboard(
-  id: Dashboard["id"],
-  data: Prisma.DashboardUpdateInput
-) {
+async function update(id: Dashboard["id"], data: Prisma.DashboardUpdateInput) {
   return prisma.dashboard.update({
     where: {
       id,
@@ -37,7 +34,7 @@ export async function updateDashboard(
   });
 }
 
-export async function deleteDashboard(id: Dashboard["id"]) {
+async function deleteById(id: Dashboard["id"]) {
   return prisma.dashboard.delete({
     where: {
       id,
@@ -45,7 +42,7 @@ export async function deleteDashboard(id: Dashboard["id"]) {
   });
 }
 
-export function findSlotsByDashboardId(id: Dashboard["id"]) {
+function findSlots(id: Dashboard["id"]) {
   return prisma.dashboard.findUnique({
     where: {
       id,
@@ -62,7 +59,7 @@ type SlotsPayload = {
   updatedAt: Date;
 }[];
 
-export async function updateDashboardSlots(
+async function updateSlots(
   dashboardId: Dashboard["id"],
   {
     toCreate,
@@ -99,3 +96,13 @@ export async function updateDashboardSlots(
     }))
     .catch((r) => console.log("transaction", r));
 }
+
+export default {
+  create,
+  findById,
+  findByUserId,
+  update,
+  deleteById,
+  findSlots,
+  updateSlots,
+};
