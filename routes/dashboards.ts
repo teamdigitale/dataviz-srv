@@ -1,8 +1,8 @@
+import type { Prisma } from "@prisma/client";
 import { Router } from "express";
 import * as z from "zod";
+import facade from "../domain/dashboard-facade";
 import * as db from "../lib/db";
-
-import type { Prisma } from "@prisma/client";
 import { requireUser, validateRequest } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
 
@@ -60,71 +60,14 @@ const updateSlotsSchema = z.object({
 });
 
 /** Index */
-router.get("/", requireUser, async (req: any, res, next) => {
-  try {
-    const user: ParsedToken = req.user;
-    const id = user.userId;
-    const results = await db.findDashboardsByUserId(id);
-    res.json(results);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get("/", requireUser, facade.findAll);
 
 /** Get :ID */
 router.get(
   "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
-  async (req: any, res: any, next: any) => {
-    try {
-      const id = req.params.id;
-      const user: ParsedToken = req.user;
-      const { data } = req.body;
-      const result = await db.findDashboardById(id);
-      res.json(result);
-      return res.json({ user, data });
-    } catch (err) {
-      next(err);
-    }
-  }
+  facade.findById
 );
-
-// /** Show :ID */
-// router.get(
-//   "/show/:id",
-//   validateRequest({ params: detailSchema }),
-//   async (req: any, res, next) => {
-//     try {
-//       const id = req.params.id;
-//       let result = await db.findChartById(id);
-//       if (result?.publish !== true) {
-//         return res.json({
-//           error: { message: "Not Authorized, This chart is not public" },
-//         });
-//       }
-//       if (result?.isRemote && result?.remoteUrl) {
-//         const lastUpdate = new Date(result.updatedAt);
-//         const now = Date.now();
-//         const diff = now - lastUpdate.getTime();
-//         console.log("Diff", diff / 1000 / 60, "minutes");
-//         const isToUpdate = diff > 1000 * 60 * 60 * 24;
-//         if (isToUpdate) {
-//           //update data.
-//           console.log("Updating remote data");
-//           const remote = await axios.get("" + result.remoteUrl);
-//           if (remote.data) {
-//             console.log("Remote data", remote.data);
-//             await db.updateChart(id, { data: remote.data });
-//             result = await db.findChartById(id);
-//           }
-//         }
-//       }
-//       return res.json(result);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
 
 /** Create */
 router.post(
@@ -199,6 +142,8 @@ type TSlot = Prisma.XOR<
   Prisma.SlotUncheckedCreateWithoutDashboardInput
 >;
 
+type TUpsert = Prisma.SlotUpsertWithWhereUniqueWithoutDashboardInput;
+
 /** Update slots */
 router.put(
   "/:id/slots",
@@ -222,7 +167,7 @@ router.put(
       const dashboardData = req.body;
       console.log("Dashboard Data", dashboardData);
       console.log(updateDashboardSchema.shape.slots);
-      const result = await db.updateDashboard(dashboardId, {
+      const result = await db.updateDashboardSlots(dashboardId, {
         ...dashboardData,
         slots: {
           upsert: dashboardData.slots.map(
@@ -231,7 +176,7 @@ router.put(
                 settings: slot.settings,
                 chartId: slot.chartId,
               } satisfies TSlot)
-          ),
+          ) as TUpsert,
           // createMany: [
           //   dashboardData.slots.map((s: any) => ({
           //     where: {
