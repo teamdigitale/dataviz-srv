@@ -1,18 +1,8 @@
 import { type Dashboard, type Prisma, PrismaClient } from "@prisma/client";
+import createRepository from "./repository-factory";
 
 const prisma = new PrismaClient();
-
-async function create(data: Prisma.DashboardCreateInput) {
-  return prisma.dashboard.create({ data });
-}
-
-function findById(id: Dashboard["id"]) {
-  return prisma.dashboard.findUnique({
-    where: {
-      id,
-    },
-  });
-}
+const repo = createRepository(prisma.dashboard);
 
 async function findByUserId(userId: string) {
   return prisma.dashboard.findMany({
@@ -21,23 +11,6 @@ async function findByUserId(userId: string) {
     },
     orderBy: {
       updatedAt: "desc",
-    },
-  });
-}
-
-async function update(id: Dashboard["id"], data: Prisma.DashboardUpdateInput) {
-  return prisma.dashboard.update({
-    where: {
-      id,
-    },
-    data,
-  });
-}
-
-async function deleteById(id: Dashboard["id"]) {
-  return prisma.dashboard.delete({
-    where: {
-      id,
     },
   });
 }
@@ -98,11 +71,8 @@ async function updateSlots(
 }
 
 export default {
-  create,
-  findById,
+  ...repo,
   findByUserId,
-  update,
-  deleteById,
   findSlots,
   updateSlots,
 };
