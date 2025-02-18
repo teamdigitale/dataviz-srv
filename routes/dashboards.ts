@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as z from "zod";
 import * as db from "../lib/db";
 
+import type { Prisma } from "@prisma/client";
 import { requireUser, validateRequest } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
 
@@ -11,6 +12,19 @@ const detailSchema = z.object({
   id: z.string({
     required_error: "Id is required",
   }),
+});
+
+// const slotSchema = z.object({
+//   chartId: z.string(),
+//   dashboardId: z.string(),
+//   settings: z.optional(z.string()),
+// });
+
+const slotSchema = z.object({
+  chartId: z.string(), // Ignoriamo la validazione specifica per Chart
+  settings: z.object({}).passthrough().optional(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
 });
 
 const createDashboardSchema = z.object({
@@ -38,7 +52,11 @@ const updateDashboardSchema = z.object({
   isRemote: z.boolean().optional(),
   id: z.string().optional(),
   preview: z.string().nullable().optional(),
-  slots: z.array(z.string()).nullable().optional(),
+  slots: z.array(slotSchema).optional(),
+});
+
+const updateSlotsSchema = z.object({
+  slots: z.array(slotSchema),
 });
 
 /** Index */
@@ -176,6 +194,63 @@ router.delete(
     }
   }
 );
+type TSlot = Prisma.XOR<
+  Prisma.SlotCreateWithoutDashboardInput,
+  Prisma.SlotUncheckedCreateWithoutDashboardInput
+>;
+
+/** Update slots */
+router.put(
+  "/:id/slots",
+  [
+    validateRequest({ body: updateSlotsSchema }),
+    validateRequest({ params: detailSchema }),
+    requireUser,
+  ],
+  async (req: any, res: any, next: any) => {
+    try {
+      const user: ParsedToken = req.user;
+      const dashboardId = req.params.id;
+      const dashboard = await db.findDashboardById(dashboardId);
+      if (!dashboard) {
+        return res.json({ message: "Not Found" }).status(404);
+      }
+      if (dashboard.userId !== user.userId) {
+        return res.json({ message: "Not Authorized" }).status(401);
+      }
+      console.log("Updating dashboard", dashboardId);
+      const dashboardData = req.body;
+      console.log("Dashboard Data", dashboardData);
+      console.log(updateDashboardSchema.shape.slots);
+      const result = await db.updateDashboard(dashboardId, {
+        ...dashboardData,
+        slots: {
+          upsert: dashboardData.slots.map(
+            (slot: { settings: any; chartId: any }) =>
+              ({
+                settings: slot.settings,
+                chartId: slot.chartId,
+              } satisfies TSlot)
+          ),
+          // createMany: [
+          //   dashboardData.slots.map((s: any) => ({
+          //     where: {
+          //       // dashboardId_chartId: {
+          //       chartId: s.chartId,
+          //       dashboardId: s.dashboardId,
+          //       // },
+          //     },
+          //     data: s,
+          //   })),
+          // ],
+        } satisfies Prisma.SlotUpdateManyWithoutDashboardNestedInput,
+      });
+      return res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /** Update ID */
 router.put(
@@ -197,9 +272,10 @@ router.put(
         return res.json({ message: "Not Authorized" }).status(401);
       }
       console.log("Updating dashboard", dashboardId);
-      const chartData = req.body;
-      console.log("Dashboard Data", chartData);
-      const result = await db.updateDashboard(dashboardId, chartData);
+      const dashboardData = req.body;
+      console.log("Dashboard Data", dashboardData);
+      console.log(updateDashboardSchema.shape.slots);
+      const result = await db.updateDashboard(dashboardId, dashboardData);
       return res.json(result);
     } catch (err) {
       next(err);

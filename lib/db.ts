@@ -128,3 +128,15 @@ export async function deleteDashboard(id: Dashboard["id"]) {
     },
   });
 }
+
+export async function updateDashboardSlots(
+  id: Dashboard["id"],
+  data: Pick<Prisma.DashboardUpdateInput, "slots">
+) {
+  return prisma.dashboard.update({
+    where: {
+      id,
+    },
+    data,
+  });
+}
