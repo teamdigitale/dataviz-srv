@@ -15,6 +15,10 @@ async function findByUserId(userId: string) {
   });
 }
 
+async function findByIdWithIncludes(id: Dashboard["id"]) {
+  return repo.findById(id, { include: { slots: true } });
+}
+
 function findSlots(id: Dashboard["id"]) {
   return prisma.dashboard.findUnique({
     where: {
@@ -73,6 +77,7 @@ async function updateSlots(
 export default {
   ...repo,
   findByUserId,
+  findByIdWithIncludes,
   findSlots,
   updateSlots,
 };

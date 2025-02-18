@@ -18,7 +18,7 @@ const findById = async (req: any, res: any, next: any) => {
     const id = req.params.id;
     const user: ParsedToken = req.user;
     const { data } = req.body;
-    const result = await db.findById(id);
+    const result = await db.findByIdWithIncludes(id);
     res.json(result);
     return res.json({ user, data });
   } catch (err) {
