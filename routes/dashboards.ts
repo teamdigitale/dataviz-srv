@@ -73,47 +73,8 @@ router.get(
 router.post(
   "/",
   [validateRequest({ body: createDashboardSchema }), requireUser],
-  async (req: any, res: any, next: any) => {
-    try {
-      const user: ParsedToken = req.user;
-      const { body } = req;
-      const chartData = {
-        userId: user.userId,
-        ...body,
-      };
-      console.log(chartData);
-      const result = await db.createDashboard(chartData);
-
-      return res.status(201).json(result);
-    } catch (err) {
-      console.log(err);
-      next(err);
-    }
-  }
+  facade.create
 );
-
-// /** Publish */
-// router.post(
-//   "/publish/:id",
-//   [validateRequest({ params: detailSchema }), requireUser],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const chartId = req.params.id;
-//       const chart = await db.findChartById(chartId);
-//       if (!chart) {
-//         return res.json({ message: "Not Found" }).status(404);
-//       }
-//       if (chart.userId !== user.userId) {
-//         return res.json({ message: "Not Authorized" }).status(401);
-//       }
-//       const result = await db.publishChart(chartId, !chart?.publish);
-//       return res.json({ published: result.publish });
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
 
 /** Delete ID */
 router.delete(

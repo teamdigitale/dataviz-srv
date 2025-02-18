@@ -1,6 +1,7 @@
 import * as db from "../lib/db";
 import type { ParsedToken } from "../types";
 
+//#region query
 const findAll = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
@@ -24,5 +25,26 @@ const findById = async (req: any, res: any, next: any) => {
     next(err);
   }
 };
+//#endregion
 
-export default { findAll, findById };
+//#region command
+const create = async (req: any, res: any, next: any) => {
+  try {
+    const user: ParsedToken = req.user;
+    const { body } = req;
+    const chartData = {
+      userId: user.userId,
+      ...body,
+    };
+    console.log(chartData);
+    const result = await db.createDashboard(chartData);
+
+    return res.status(201).json(result);
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+//#endregion
+
+export default { findAll, findById, create };
