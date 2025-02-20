@@ -16,7 +16,9 @@ async function findByUserId(userId: string) {
 }
 
 async function findByIdWithIncludes(id: Dashboard["id"]) {
-  return repo.findById(id, { include: { slots: true } });
+  return repo.findById(id, {
+    include: { slots: { include: { chart: true } } },
+  });
 }
 
 function findSlots(id: Dashboard["id"]) {

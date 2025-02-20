@@ -1,12 +1,11 @@
+type IncludeParams = { [key: string]: boolean | IncludeParams };
+
 function createRepository<CreateInput, UpdateInput, WhereInput>(model: any) {
   return {
-    findById: (
-      id: string,
-      params?: { include: { [key: string]: boolean } }
-    ) => {
+    findById: (id: string, params?: { include: IncludeParams }) => {
       const args: {
         where: { [key: string]: string };
-        include?: { [key: string]: boolean };
+        include?: IncludeParams;
       } = { where: { id } };
 
       if (params?.include) {
