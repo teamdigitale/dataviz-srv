@@ -1,11 +1,7 @@
 import { Router } from "express";
-import * as db from "../lib/db";
 import * as z from "zod";
-import axios from "axios";
-
-import { requireUser } from "../lib/middlewares";
-import type { ParsedToken } from "../types";
-import { validateRequest } from "../lib/middlewares";
+import facade from "../domain/dashboard-facade";
+import { requireUser, validateRequest } from "../lib/middlewares";
 
 const router = Router();
 
@@ -15,12 +11,16 @@ const detailSchema = z.object({
   }),
 });
 
+const slotSchema = z.object({
+  chartId: z.string(), // Ignoriamo la validazione specifica per Chart
+  settings: z.object({}).passthrough().optional(),
+  createdAt: z.date().default(() => new Date()),
+  updatedAt: z.date().default(() => new Date()),
+});
+
 const createDashboardSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  chart: z.string({
-    required_error: "Chart type is required",
-  }),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   remoteUrl: z.string().nullable().optional(),
@@ -32,7 +32,7 @@ const createDashboardSchema = z.object({
 const updateDashboardSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
-  chart: z.string().optional(),
+  // chart: z.string().optional(),
   config: z.unknown().optional(),
   data: z.unknown().optional(),
   publish: z.boolean().optional(),
@@ -40,173 +40,57 @@ const updateDashboardSchema = z.object({
   isRemote: z.boolean().optional(),
   id: z.string().optional(),
   preview: z.string().nullable().optional(),
-  slots: z.array(z.string()).nullable().optional(),
+  slots: z.array(slotSchema).optional(),
+});
+
+const updateSlotsSchema = z.object({
+  slots: z.array(slotSchema),
 });
 
 /** Index */
-router.get("/", requireUser, async (req: any, res, next) => {
-  try {
-    const user: ParsedToken = req.user;
-    const id = user.userId;
-    const results = await db.findChartsByUSerId(id);
-    res.json(results);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get("/", requireUser, facade.findAll);
 
 /** Get :ID */
 router.get(
   "/:id",
   [validateRequest({ params: detailSchema }), requireUser],
-  async (req: any, res: any, next: any) => {
-    try {
-      const id = req.params.id;
-      const user: ParsedToken = req.user;
-      const { data } = req.body;
-      const result = await db.findDashboardById(id);
-      res.json(result);
-      return res.json({ user, data });
-    } catch (err) {
-      next(err);
-    }
-  }
+  facade.findById
 );
 
-// /** Show :ID */
-// router.get(
-//   "/show/:id",
-//   validateRequest({ params: detailSchema }),
-//   async (req: any, res, next) => {
-//     try {
-//       const id = req.params.id;
-//       let result = await db.findChartById(id);
-//       if (result?.publish !== true) {
-//         return res.json({
-//           error: { message: "Not Authorized, This chart is not public" },
-//         });
-//       }
-//       if (result?.isRemote && result?.remoteUrl) {
-//         const lastUpdate = new Date(result.updatedAt);
-//         const now = Date.now();
-//         const diff = now - lastUpdate.getTime();
-//         console.log("Diff", diff / 1000 / 60, "minutes");
-//         const isToUpdate = diff > 1000 * 60 * 60 * 24;
-//         if (isToUpdate) {
-//           //update data.
-//           console.log("Updating remote data");
-//           const remote = await axios.get("" + result.remoteUrl);
-//           if (remote.data) {
-//             console.log("Remote data", remote.data);
-//             await db.updateChart(id, { data: remote.data });
-//             result = await db.findChartById(id);
-//           }
-//         }
-//       }
-//       return res.json(result);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
+/** Create */
+router.post(
+  "/",
+  [validateRequest({ body: createDashboardSchema }), requireUser],
+  facade.create
+);
 
-// /** Create */
-// router.post(
-//   "/",
-//   [validateRequest({ body: createDashboardSchema }), requireUser],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const { body } = req;
-//       const chartData = {
-//         userId: user.userId,
-//         ...body,
-//       };
-//       console.log(chartData);
-//       const result = await db.createChart(chartData);
+/** Delete ID */
+router.delete(
+  "/:id",
+  [validateRequest({ params: detailSchema }), requireUser],
+  facade.deleteById
+);
 
-//       return res.json(result);
-//     } catch (err) {
-//       console.log(err);
-//       next(err);
-//     }
-//   }
-// );
+/** Update slots */
+router.put(
+  "/:id/slots",
+  [
+    validateRequest({ body: updateSlotsSchema }),
+    validateRequest({ params: detailSchema }),
+    requireUser,
+  ],
+  facade.updateSlots
+);
 
-// /** Publish */
-// router.post(
-//   "/publish/:id",
-//   [validateRequest({ params: detailSchema }), requireUser],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const chartId = req.params.id;
-//       const chart = await db.findChartById(chartId);
-//       if (!chart) {
-//         return res.json({ message: "Not Found" }).status(404);
-//       }
-//       if (chart.userId !== user.userId) {
-//         return res.json({ message: "Not Authorized" }).status(401);
-//       }
-//       const result = await db.publishChart(chartId, !chart?.publish);
-//       return res.json({ published: result.publish });
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
-
-// /** Delete ID */
-// router.delete(
-//   "/:id",
-//   [validateRequest({ params: detailSchema }), requireUser],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const chartId = req.params.id;
-//       const chart = await db.findChartById(chartId);
-//       if (!chart) {
-//         return res.json({ message: "Not Found" }).status(404);
-//       }
-//       if (chart.userId !== user.userId) {
-//         return res.json({ message: "Not Authorized" }).status(401);
-//       }
-//       const result = await db.deleteChart(chartId);
-//       return res.json(result);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
-
-// /** Update ID */
-// router.put(
-//   "/:id",
-//   [
-//     validateRequest({ body: updateDashboardSchema }),
-//     validateRequest({ params: detailSchema }),
-//     requireUser,
-//   ],
-//   async (req: any, res: any, next: any) => {
-//     try {
-//       const user: ParsedToken = req.user;
-//       const chartId = req.params.id;
-//       const chart = await db.findChartById(chartId);
-//       if (!chart) {
-//         return res.json({ message: "Not Found" }).status(404);
-//       }
-//       if (chart.userId !== user.userId) {
-//         return res.json({ message: "Not Authorized" }).status(401);
-//       }
-//       console.log("Updating chart", chartId);
-//       const chartData = req.body;
-//       console.log("Chart Data", chartData);
-//       const result = await db.updateChart(chartId, chartData);
-//       return res.json(result);
-//     } catch (err) {
-//       next(err);
-//     }
-//   }
-// );
+/** Update ID */
+router.put(
+  "/:id",
+  [
+    validateRequest({ body: updateDashboardSchema }),
+    validateRequest({ params: detailSchema }),
+    requireUser,
+  ],
+  facade.update
+);
 
 export default router;
