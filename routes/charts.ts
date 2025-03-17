@@ -1,11 +1,10 @@
-import { Router } from "express";
-import * as db from "../lib/db";
-import * as z from "zod";
 import axios from "axios";
+import { Router } from "express";
+import * as z from "zod";
+import * as db from "../lib/db";
 
-import { requireUser } from "../lib/middlewares";
+import { requireUser, validateRequest } from "../lib/middlewares";
 import type { ParsedToken } from "../types";
-import { validateRequest } from "../lib/middlewares";
 
 const router = Router();
 
