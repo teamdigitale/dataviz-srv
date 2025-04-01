@@ -1,4 +1,4 @@
-import db from "../repository/dashboard-repository";
+import dashboardRepository from "../repository/dashboard-repository";
 import type { ParsedToken } from "../types";
 
 //#region query
@@ -6,7 +6,7 @@ const findAll = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
     const id = user.userId;
-    const results = await db.findByUserId(id);
+    const results = await dashboardRepository.findByUserId(id);
     res.json(results);
   } catch (err) {
     next(err);
@@ -18,7 +18,7 @@ const findById = async (req: any, res: any, next: any) => {
     const id = req.params.id;
     const user: ParsedToken = req.user;
     const { data } = req.body;
-    const result = await db.findByIdWithIncludes(id);
+    const result = await dashboardRepository.findByIdWithIncludes(id);
     res.json(result);
     return res.json({ user, data });
   } catch (err) {
@@ -37,7 +37,7 @@ const create = async (req: any, res: any, next: any) => {
       ...body,
     };
     console.log(chartData);
-    const result = await db.create(chartData);
+    const result = await dashboardRepository.create(chartData);
 
     return res.status(201).json(result);
   } catch (err) {
@@ -49,7 +49,7 @@ const update = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
     const dashboardId = req.params.id;
-    const dashboard = await db.findById(dashboardId);
+    const dashboard = await dashboardRepository.findById(dashboardId);
     if (!dashboard) {
       return res.json({ message: "Not Found" }).status(404);
     }
@@ -59,7 +59,7 @@ const update = async (req: any, res: any, next: any) => {
     console.log("Updating dashboard", dashboardId);
     const dashboardData = req.body;
     console.log("Dashboard Data", dashboardData);
-    const result = await db.update(dashboardId, dashboardData);
+    const result = await dashboardRepository.update(dashboardId, dashboardData);
     return res.json(result);
   } catch (err) {
     next(err);
@@ -69,14 +69,14 @@ const deleteById = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
     const dashboardId = req.params.id;
-    const dashboard = await db.findById(dashboardId);
+    const dashboard = await dashboardRepository.findById(dashboardId);
     if (!dashboard) {
       return res.json({ message: "Not Found" }).status(404);
     }
     if (dashboard.userId !== user.userId) {
       return res.json({ message: "Not Authorized" }).status(401);
     }
-    const result = await db.deleteById(dashboardId);
+    const result = await dashboardRepository.deleteById(dashboardId);
     return res.status(204).json();
   } catch (err) {
     next(err);
@@ -146,7 +146,7 @@ const updateSlots = async (req: any, res: any, next: any) => {
   try {
     const user: ParsedToken = req.user;
     const dashboardId = req.params.id;
-    const dashboard = await db.findSlots(dashboardId);
+    const dashboard = await dashboardRepository.findSlots(dashboardId);
     if (!dashboard) {
       return res.json({ message: "Not Found" }).status(404);
     }
@@ -167,7 +167,7 @@ const updateSlots = async (req: any, res: any, next: any) => {
 
     console.log(toCreate, toUpdate);
 
-    const result = await db.updateSlots(dashboardId, {
+    const result = await dashboardRepository.updateSlots(dashboardId, {
       toCreate,
       toUpdate,
       toDelete,
