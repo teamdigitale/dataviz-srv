@@ -76,10 +76,26 @@ async function updateSlots(
     .catch((r) => console.log("transaction", r));
 }
 
+async function deleteById(id: Dashboard["id"]) {
+  const slotModel = prisma.slot;
+  const dashboardModel = prisma.dashboard;
+  const deleteSlots = slotModel.deleteMany({ where: { dashboardId: id } });
+  const deleteDashboard = dashboardModel.delete({ where: { id } })
+
+  return await prisma
+    .$transaction([deleteSlots, deleteDashboard])
+    .then(() => true)
+    .catch(e => {
+      console.error('Dashboard delete failed')
+      throw e;
+    })
+}
+
 export default {
   ...repo,
   findByUserId,
   findByIdWithIncludes,
   findSlots,
   updateSlots,
+  deleteById
 };
