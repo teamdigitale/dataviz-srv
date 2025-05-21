@@ -89,14 +89,12 @@ router.get(
         const lastUpdate = new Date(result.updatedAt);
         const now = Date.now();
         const diff = now - lastUpdate.getTime();
-        console.log("Diff", diff / 1000 / 60, "minutes");
+        // console.log("Diff", diff / 1000 / 60, "minutes");
         const isToUpdate = diff > 1000 * 60 * 60 * 24;
         if (isToUpdate) {
-          //update data.
-          console.log("Updating remote data");
+          //refresh data.
           const remote = await axios.get("" + result.remoteUrl);
           if (remote.data) {
-            console.log("Remote data", remote.data);
             await db.updateChart(id, { data: remote.data });
             result = await db.findChartById(id);
           }
@@ -121,7 +119,6 @@ router.post(
         userId: user.userId,
         ...body,
       };
-      console.log(chartData);
       const result = await db.createChart(chartData);
 
       return res.json(result);
@@ -197,9 +194,7 @@ router.put(
       if (chart.userId !== user.userId) {
         return res.json({ message: "Not Authorized" }).status(401);
       }
-      console.log("Updating chart", chartId);
       const chartData = req.body;
-      console.log("Chart Data", chartData);
       const result = await db.updateChart(chartId, chartData);
       return res.json(result);
     } catch (err) {
