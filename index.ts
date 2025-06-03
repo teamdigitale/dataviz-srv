@@ -6,6 +6,7 @@ import * as middlewares from "./lib/middlewares.ts";
 import authRouter from "./routes/auth.ts";
 import chartRouter from "./routes/charts.ts";
 import dashRouter from "./routes/dashboards.ts";
+import suggestionsRouter from "./routes/hints.ts";
 // import seedUsers from "./seeds/seed-users.ts";
 // import * as db from "./lib/db.ts";
 
@@ -21,26 +22,17 @@ app.get("/", (req, res) => {
   res.json("Hello World!");
 });
 
-/*
+/* SEED
 app.get("/seed", (req, res) => {
   const result = seedUsers();
   res.json({ result });
-});
-
-app.get("/users", async (req, res) => {
-  const results = await db.getUsers();
-  res.json(
-    results.map((user: any) => {
-      delete user.password;
-      return user;
-    })
-  );
 });
 */
 
 app.use("/auth", authRouter as Router);
 app.use("/charts", chartRouter as Router);
 app.use("/dashboards", dashRouter as Router);
+app.use("/hints", suggestionsRouter as Router);
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
