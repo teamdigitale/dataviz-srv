@@ -2,10 +2,6 @@ import OpenAI from "openai";
 const APIKEY = process.env.OPENAI_API_KEY;
 const client = new OpenAI({ apiKey: APIKEY });
 
-function isNumeric(s: string) {
-  return /^[+-]?\d+(\.\d+)?$/.test(s);
-}
-
 export function getPrompt(dataSchema: string) {
   return `
 You are an AI data analysis assistant. Your goal is to help a user visualize data from a provided CSV or JSON file using a web application.
@@ -89,6 +85,10 @@ interface AISuggestion {
 `;
 }
 
+function isNumeric(s: string) {
+  return /^[+-]?\d+(\.\d+)?$/.test(s);
+}
+
 export function getDataSchema(inputData: (string | number)[][]) {
   const columnsNames: string[] = inputData?.[0].map((i) => "" + i);
   const numOfSampleValues = 3;
@@ -99,13 +99,6 @@ export function getDataSchema(inputData: (string | number)[][]) {
     for (let row = 1; row < numOfSampleValues; row++) {
       sample.push(inputData[row][column]);
     }
-    // [
-    // row0   [Col0, Col1, Col2]
-    // row1   [x,     x ,    x]
-    // row2   [x,     x ,    x]
-    // row3   [x,     x ,    x]
-    // ]
-
     return {
       name,
       type,
@@ -117,76 +110,7 @@ export function getDataSchema(inputData: (string | number)[][]) {
     columns,
     rowCount,
   };
-
-  // return {
-  //   "columns": [
-  //     {
-  //       "name": "Order ID",
-  //       "type": "string",
-  //       "sample": ["A-1001", "A-1002", "B-1003"],
-  //     },
-  //     {
-  //       "name": "Order Date",
-  //       "type": "date",
-  //       "sample": ["2023-01-15", "2023-01-16", "2023-02-01"],
-  //     },
-  //     {
-  //       "name": "Region",
-  //       "type": "string",
-  //       "sample": ["North", "South", "North"],
-  //     },
-  //   ],
-  //   "rowCount": 1000, // (or some indication of data size)
-  // };
 }
-
-//expoeted response:
-// [
-//   {
-//     "description": "See total sales for each product category.",
-//     "transformations_needed": ["Group by 'Product Category'", "Sum 'Sales'"],
-//     "suggested_x_axis": "Product Category",
-//     "suggested_y_axis": ["Total Sales"],
-//     "suggested_chart_type": "bar", // or "pie" if single series is preferred
-//     "example_transformed_data_for_app": [
-//       ["-", "Total Sales"],
-//       ["Electronics", 12500.5],
-//       ["Books", 8750.0],
-//       ["Clothing", 6200.25],
-//     ],
-//   },
-//   {
-//     "description": "Track sales trends over time (by month).",
-//     "transformations_needed": [
-//       "Extract month from 'Order Date'",
-//       "Group by month",
-//       "Sum 'Sales'",
-//     ],
-//     "suggested_x_axis": "Month",
-//     "suggested_y_axis": ["Monthly Sales"],
-//     "suggested_chart_type": "line",
-//     "example_transformed_data_for_app": [
-//       ["-", "Monthly Sales"],
-//       ["2023-Jan", 5300.0],
-//       ["2023-Feb", 4800.75],
-//       ["2023-Mar", 6100.0],
-//     ],
-//   },
-//   {
-//     "description": "Compare sales across different regions.",
-//     "transformations_needed": ["Group by 'Region'", "Sum 'Sales'"],
-//     "suggested_x_axis": "Region",
-//     "suggested_y_axis": ["Total Sales"],
-//     "suggested_chart_type": "geo", // Assuming 'Region' can be mapped
-//     "example_transformed_data_for_app": [
-//       ["-", "Total Sales"],
-//       ["North", 9500.0],
-//       ["South", 7250.75],
-//       ["East", 4500.0],
-//       ["West", 6000.0],
-//     ],
-//   },
-// ];
 
 export async function getSuggestions(inputData: (string | number)[][]) {
   const dataSchema = getDataSchema(inputData);
@@ -201,7 +125,7 @@ export async function getSuggestions(inputData: (string | number)[][]) {
       .replace("```json", "")
       .replace("```", "");
     const result = JSON.parse(text);
-    console.log(JSON.stringify(result, null, 2));
+    // console.log(JSON.stringify(result, null, 2));
     return result;
   } catch (error) {
     console.error("Error on OpenAi");
