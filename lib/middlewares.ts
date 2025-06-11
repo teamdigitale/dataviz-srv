@@ -48,6 +48,25 @@ export function validateRequest(validators: RequestValidators) {
   };
 }
 
+export function checkAuthCookie(req: any, res: Response, next: NextFunction) {
+  console.log("checkAuthCookie");
+  console.log("Cookies: ", req.cookies);
+  try {
+    const accessToken = req.cookies["access_token"] || null;
+    console.log("ACCESS TOKEN", accessToken);
+    if (!accessToken) {
+      return;
+    }
+    const payload = verifyAccessToken(accessToken) as any;
+    req.user = payload;
+  } catch (error) {
+    console.log("ERROR", error);
+    req.user = null;
+  } finally {
+    next();
+  }
+}
+
 export function deserializeUser(req: any, res: Response, next: NextFunction) {
   try {
     const accessToken = (req.headers.authorization || "").replace(
@@ -69,7 +88,6 @@ export function deserializeUser(req: any, res: Response, next: NextFunction) {
 export function requireUser(req: any, res: Response, next: NextFunction) {
   try {
     const user = req.user;
-
     if (!user) {
       res.status(401);
       throw new Error("Unauthorized.");
