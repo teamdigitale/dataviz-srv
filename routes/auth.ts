@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as bcrypt from "bcrypt";
 import * as db from "../lib/db";
-import { generateTokens } from "../lib/jwt";
+import { generateTokens, sendAccessToken } from "../lib/jwt";
 import { validateRequest } from "../lib/middlewares";
 import * as z from "zod";
 
@@ -17,6 +17,21 @@ const registerSchema = z.object({
 });
 
 const router = Router();
+
+router.get("/user", (req: any, res) => {
+  console.log("check user");
+  try {
+    const user = req?.user || null;
+    console.log("user", user);
+    if (!user) {
+      res.status(401).json(null);
+    }
+    return res.status(201).json({ user });
+  } catch (error) {
+    console.log("ERROR", error);
+  }
+  return res.json({ message: "hello" });
+});
 
 router.post(
   "/register",
@@ -38,9 +53,12 @@ router.post(
       //@TODO SEND EMAIL TO ACTIVATE USER
 
       const { accessToken } = generateTokens(user);
-      res.json({
-        accessToken,
-      });
+
+      sendAccessToken(res, accessToken);
+      // res.json({
+      //   accessToken,
+      // });
+      res.json({ auth: true });
     } catch (err) {
       next(err);
     }
@@ -77,13 +95,20 @@ router.post(
         throw new Error("Invalid login credentials.");
       }
       const { accessToken } = generateTokens(existingUser);
-      res.json({
-        accessToken,
-      });
+      sendAccessToken(res, accessToken);
+      // res.json({
+      //   accessToken,
+      // });
+      res.json({ auth: true });
     } catch (error) {
       next(error);
     }
   }
 );
+
+router.get("/logout", (req: any, res) => {
+  res.clearCookie("access_token");
+  return res.status(204);
+});
 
 export default router;

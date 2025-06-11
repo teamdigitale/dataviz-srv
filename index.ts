@@ -10,12 +10,29 @@ import suggestionsRouter from "./routes/hints.ts";
 // import seedUsers from "./seeds/seed-users.ts";
 // import * as db from "./lib/db.ts";
 
+const whitelist = process?.env.DOMAINS?.split(",") || "http://localhost:3000";
+
 const app = express();
-app.use(helmet());
-app.use(cors());
-app.use(express.json());
+
+// app.use(helmet());
+// app.use(
+//   cors({
+//     origin: whitelist,
+//     // credentials: true,
+//     // origin: whitelist,
+//     // methods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+//   })
+// );
+app.use(
+  cors({
+    origin: ["localhost", "http://localhost:3000"],
+    credentials: true,
+  })
+);
 app.use(cookieParser());
-app.use(middlewares.deserializeUser);
+app.use(express.json());
+app.use(middlewares.checkAuthCookie);
+// app.use(middlewares.deserializeUser);
 const port = 3003;
 
 app.get("/", (req, res) => {

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import * as ai from "../lib/ai";
 import { requireUser } from "../lib/middlewares";
-import type { ParsedToken } from "../types";
 
 const router = Router();
 
