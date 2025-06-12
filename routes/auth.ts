@@ -4,6 +4,8 @@ import * as db from "../lib/db";
 import { generateTokens, sendAccessToken } from "../lib/jwt";
 import { validateRequest } from "../lib/middlewares";
 import * as z from "zod";
+import generatePin from "../lib/pin";
+import { sendActivationEmail } from "../lib/email";
 
 const registerSchema = z.object({
   email: z
@@ -51,13 +53,13 @@ router.post(
       const user = await db.createUserByEmailAndPassword({ email, password });
 
       //@TODO SEND EMAIL TO ACTIVATE USER
+      const pin = generatePin();
 
-      const { accessToken } = generateTokens(user);
+      sendActivationEmail(email, pin);
 
-      sendAccessToken(res, accessToken);
-      // res.json({
-      //   accessToken,
-      // });
+      // const { accessToken } = generateTokens(user);
+      // sendAccessToken(res, accessToken);
+
       res.json({ auth: true });
     } catch (err) {
       next(err);

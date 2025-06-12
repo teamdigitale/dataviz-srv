@@ -1,6 +1,7 @@
 import type { Chart, Prisma, User } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
+import generatePin from "./pin";
 
 export const prisma = new PrismaClient();
 
@@ -84,4 +85,36 @@ export function deleteChart(id: Chart["id"]) {
 
 export async function disconnect() {
   return prisma.$disconnect();
+}
+
+export async function findCodeByUid(userId: string) {
+  const result = await prisma.codes.findFirst({
+    where: {
+      userId,
+    },
+  });
+  let expired = true;
+
+  if (result) {
+    expired =
+      new Date(result.updatedAt).getMilliseconds() + result?.expire * 1000 <
+      Date.now();
+  }
+
+  return expired ? null : result;
+}
+
+export async function createCode(userId: string) {
+  const code = generatePin();
+  await prisma.codes.deleteMany({
+    where: {
+      userId,
+    },
+  });
+  return prisma.codes.create({
+    data: {
+      userId,
+      code,
+    },
+  });
 }

@@ -72,3 +72,12 @@ model Dashboard {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Codes {
+  id        String   @id @default(cuid())
+  code      String
+  userId    String
+  expire    Int      @default(60)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
