@@ -1,6 +1,5 @@
-#.dockerignore
-
 node_modules
+npm-debug.log
 Dockerfile*
 docker-compose*
 .dockerignore
@@ -9,9 +8,36 @@ docker-compose*
 README.md
 LICENSE
 .vscode
+.devcontainer
 Makefile
-helm-charts
-.env
+helm-charts/
+helm/
+k8s/
+.env*
 .editorconfig
 .idea
 coverage*
+*.log
+.cache
+.DS_Store
+Thumbs.db
+
+# Source files not needed in container
+bruno/
+sample_data*.json
+sample.env
+seeds/
+init-db/
+*.md
+fly.toml
+
+# Development scripts
+setup-dataviz.sh
+*.sh
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
