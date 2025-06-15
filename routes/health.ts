@@ -1,4 +1,4 @@
-// routes/health.ts
+import { logger } from "../lib/logger.js";
 import { Router, Request, Response } from "express";
 import { prisma } from "../lib/db.js";
 
@@ -7,14 +7,18 @@ const router = Router();
 // Basic health check - per liveness probe
 router.get("/api/health", async (req: Request, res: Response) => {
   try {
-    res.status(200).json({
+    const healthData = {
       status: "healthy",
       timestamp: new Date().toISOString(),
       uptime: Math.floor(process.uptime()),
       version: process.env.npm_package_version || "1.0.0",
       service: "dataviz-srv"
-    });
+    };
+    
+    logger.health('/api/health', 'healthy');
+    res.status(200).json(healthData);
   } catch (error) {
+    logger.health('/api/health', 'unhealthy', { error });
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
@@ -34,7 +38,6 @@ router.get("/api/ready", async (req: Request, res: Response) => {
   let allHealthy = true;
 
   try {
-    // Test database connection con timeout
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => reject(new Error('Database timeout')), 5000);
     });
@@ -44,12 +47,13 @@ router.get("/api/ready", async (req: Request, res: Response) => {
     await Promise.race([dbPromise, timeoutPromise]);
     checks.database = true;
   } catch (error) {
-    console.error('Database health check failed:', error);
+    logger.error('Database health check failed', error instanceof Error ? error : { error });
     checks.database = false;
     allHealthy = false;
   }
 
   const status = allHealthy ? 200 : 503;
+  logger.health('/api/ready', allHealthy ? 'healthy' : 'unhealthy', checks);
   
   res.status(status).json({
     status: allHealthy ? "ready" : "not ready",

@@ -8,6 +8,7 @@ import chartRouter from "./routes/charts.ts";
 import dashRouter from "./routes/dashboards.ts";
 import suggestionsRouter from "./routes/hints.ts";
 import healthRouter from "./routes/health.ts";
+import { logger } from "./lib/logger.ts";
 
 // import seedUsers from "./seeds/seed-users.ts";
 // import * as db from "./lib/db.ts";
@@ -37,6 +38,8 @@ app.use(express.json({ limit: '10mb' })); // Aumentato limite per dashboard con 
 
 // Health checks PRIMA di altri middleware per evitare autenticazione
 app.use("/", healthRouter as Router);
+
+app.use(middlewares.requestLogger);
 
 // Middleware di autenticazione
 app.use(middlewares.checkAuthCookie);
@@ -112,14 +115,15 @@ process.on('SIGINT', async () => {
 
 // Start server
 app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 DataViz Server listening on port ${port}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Health check: http://localhost:${port}/health`);
-  console.log(`⚡ Ready check: http://localhost:${port}/ready`);
-  
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`📖 API docs: http://localhost:${port}/`);
-  }
+  logger.info('Server started', {
+    port,
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/api/health',
+      ready: '/api/ready',
+      metrics: '/api/metrics'
+    }
+  });
 });
 
 export default app;
