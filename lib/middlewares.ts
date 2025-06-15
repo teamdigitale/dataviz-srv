@@ -1,11 +1,28 @@
-import { verifyAccessToken } from './jwt';
-import { ZodError } from 'zod';
-import type { ErrorResponse, RequestValidators } from '../types';
-import type { NextFunction, Response, Request } from 'express';
+import { verifyAccessToken } from "./jwt";
+import { ZodError } from "zod";
+import type { ErrorResponse, RequestValidators } from "../types";
+import type { NextFunction, Response, Request } from "express";
+
+import { logger } from "./logger.js";
+
+export function requestLogger(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    // Skip logging per errori che già vengono loggati
+    if (res.statusCode >= 400) return;
+
+    const duration = Date.now() - start;
+    logger.request(req, res, duration);
+  });
+
+  next();
+}
 
 export function notFound(req: Request, res: Response, next: NextFunction) {
   res.status(404);
-  const error = new Error(`🔍 - Not Found - ${req.originalUrl}`);
+  const error = new Error(`Not Found - ${req.originalUrl}`);
+  (error as any).isNotFound = true;
   next(error);
 }
 
@@ -13,15 +30,28 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response<ErrorResponse>,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   next: NextFunction
 ) {
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
   res.status(statusCode);
+
+  if ((err as any).isNotFound) {
+    logger.info("Route not found", {
+      method: req.method,
+      url: req.originalUrl,
+    });
+  } else if (statusCode >= 500) {
+    logger.error(err.message, {
+      method: req.method,
+      url: req.originalUrl,
+      stack: err.stack,
+    });
+  }
+
   res.json({
     error: {
       message: err.message,
-      stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack,
+      stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
     },
   });
 }
@@ -33,7 +63,7 @@ export function validateRequest(validators: RequestValidators) {
         req.params = await validators.params.parseAsync(req.params);
       }
       if (validators.body) {
-        console.log(JSON.stringify(req.body, null, 2));
+        logger.info(JSON.stringify(req.body, null, 2));
         req.body = await validators.body.parseAsync(req.body);
       }
       if (validators.query) {
@@ -41,10 +71,15 @@ export function validateRequest(validators: RequestValidators) {
       }
       next();
     } catch (error) {
-      console.log('ERROR VALIDATING REQUEST SCHEMA', error);
+      logger.info("ERROR VALIDATING REQUEST SCHEMA", error);
       if (error instanceof ZodError) {
-        console.log('ZOD ERROR');
+        logger.info("ZOD ERROR");
         res.status(400);
+        logger.warn("Validation error", {
+          errors: error.errors,
+          url: req.originalUrl,
+          method: req.method,
+        });
       }
       next(error);
     }
@@ -52,28 +87,28 @@ export function validateRequest(validators: RequestValidators) {
 }
 
 export function checkAuth(req: any, res: Response, next: NextFunction) {
-  console.log('checkAuth');
+  logger.info("checkAuth");
   let accessToken;
   try {
-    console.log('checkAuthCookie');
-    console.log('Cookies: ', req.cookies);
-    accessToken = req.cookies['access_token'];
+    logger.info("checkAuthCookie");
+    logger.info("Cookies: ", req.cookies);
+    accessToken = req.cookies["access_token"];
     if (!accessToken) {
-      console.log('checkAuthBearer');
-      console.log('Bearer: ', req.headers.authorization);
-      accessToken = (req.headers.authorization || '').replace(/^Bearer\s/, '');
+      logger.info("checkAuthBearer");
+      logger.info("Bearer: ", req.headers.authorization);
+      accessToken = (req.headers.authorization || "").replace(/^Bearer\s/, "");
     }
 
     if (accessToken) {
-      console.log('ACCESS TOKEN', accessToken);
+      logger.info("ACCESS TOKEN", accessToken);
       const payload = verifyAccessToken(accessToken) as any;
-      console.log('USER', payload);
+      logger.info("USER", payload);
       req.user = payload;
       req.token = accessToken;
     }
     next();
   } catch (error) {
-    console.error('checkAuth ERROR', error);
+    console.error("checkAuth ERROR", error);
     req.user = null;
     return res.status(401).json({ error });
   }
@@ -84,9 +119,9 @@ export function requireUser(req: any, res: Response, next: NextFunction) {
     const user = req.user;
     if (!user) {
       res.status(401);
-      throw new Error('Unauthorized.');
+      throw new Error("Unauthorized.");
     }
-    console.log('user is ok');
+    logger.info("user is ok");
 
     next();
   } catch (error) {
