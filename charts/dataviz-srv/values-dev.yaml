@@ -1,0 +1,44 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/teamdigitale/dataviz-srv
+  tag: main
+  pullPolicy: Always
+
+env:
+  NODE_ENV: development
+  LOG_LEVEL: debug
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+  hosts:
+    - host: dataviz-dev.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: dataviz-dev-tls
+      hosts:
+        - dataviz-dev.example.com
+
+postgresql:
+  enabled: true
+  primary:
+    persistence:
+      size: 5Gi
+
+networkPolicy:
+  enabled: false
