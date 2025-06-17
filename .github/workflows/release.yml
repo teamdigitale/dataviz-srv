@@ -95,12 +95,6 @@ jobs:
           cd charts/dataviz-srv
           helm dependency update
 
-      - name: 📦 Update Helm dependencies
-        if: steps.changes.outputs.charts == 'true'
-        run: |
-          cd charts/dataviz-srv
-          helm dependency update
-
       - name: 🏷️ Auto-version Helm chart
         if: steps.changes.outputs.charts == 'true'
         id: version
@@ -217,6 +211,12 @@ jobs:
         uses: azure/setup-helm@v4
         with:
           version: '3.14.0'
+
+      - name: 📦 Update Helm dependencies
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          cd charts/dataviz-srv
+          helm dependency update
 
       - name: 🔍 Helm lint
         if: steps.changes.outputs.charts == 'true'
