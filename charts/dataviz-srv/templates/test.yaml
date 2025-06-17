@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "dataviz-srv.fullname" . }}-test
+  labels:
+    {{- include "dataviz-srv.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+  - name: test
+    image: curlimages/curl:latest
+    command:
+    - /bin/sh
+    - -c
+    - |
+      set -e
+      echo "Testing DataViz service health endpoints..."
+      
+      # Test basic health
+      echo "Testing /api/health..."
+      curl -f http://{{ include "dataviz-srv.fullname" . }}:{{ .Values.service.port }}/api/health
+      
+      # Test readiness
+      echo "Testing /api/ready..."
+      curl -f http://{{ include "dataviz-srv.fullname" . }}:{{ .Values.service.port }}/api/ready
+      
+      # Test metrics
+      echo "Testing /api/metrics..."
+      curl -f http://{{ include "dataviz-srv.fullname" . }}:{{ .Values.service.port }}/api/metrics | head -10
+      
+      # Test root endpoint
+      echo "Testing root endpoint..."
+      curl -f http://{{ include "dataviz-srv.fullname" . }}:{{ .Values.service.port }}/
+      
+      echo "All tests passed! ✅"

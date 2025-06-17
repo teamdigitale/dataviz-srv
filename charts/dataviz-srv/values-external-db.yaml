@@ -1,0 +1,15 @@
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: my-postgres-server.postgres.database.azure.com
+  port: 5432
+  username: dataviz_user@my-postgres-server
+  database: dataviz
+  existingSecret: azure-postgres-credentials
+  existingSecretPasswordKey: password
+
+secrets:
+  JWT_SECRET: "my-super-secure-jwt-secret"
+  RESEND_API_KEY: "re_xxxxxxxxxx"
+  OPENAI_API_KEY: "sk-xxxxxxxxxx"

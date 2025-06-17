@@ -1,45 +1,47 @@
-# syntax = docker/dockerfile:1
+# BASE Stage
+FROM oven/bun:1 AS base
 
-# Adjust BUN_VERSION as desired
-FROM imbios/bun-node:1-20-slim as base
+# setup all global artifacts. why Node? A: https://github.com/oven-sh/bun/issues/4848
+RUN apt update \
+    && apt install -y curl
 
-LABEL fly_launch_runtime="Bun/Prisma"
+ARG NODE_VERSION=20
+RUN curl -L https://raw.githubusercontent.com/tj/n/master/bin/n -o n \
+    && bash n $NODE_VERSION \
+    && rm n \
+    && npm install -g n   
+    
 
-# Bun/Prisma app lives here
-WORKDIR /app
+# INSTALL Stage
 
-# Set production environment
-ENV NODE_ENV="production"
+# install dependencies into temp folder. this will cache them and speed up future builds
+FROM base AS install
+WORKDIR /temp/prod/
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile --production
 
-# Throw-away build stage to reduce size of final image
-FROM base as build
 
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential openssl pkg-config python-is-python3
+# PRERELEASE Stage
 
-# Install node modules
-COPY --link bun.lockb package.json ./
-RUN bun install --ci
+# copy node_modules from temp folder. then copy all (non-ignored) project files into the image
+FROM install AS prerelease
 
-# Generate Prisma Client
-COPY --link prisma .
+WORKDIR /usr/src/app
+
+COPY --from=install /temp/prod/node_modules node_modules
+COPY . .
 RUN npx prisma generate
 
-# Copy application code
-COPY --link . .
+# RELEASE Stage
 
-# Final stage for app image
-FROM base
+FROM base AS release
+COPY --from=prerelease /usr/src/app/node_modules ./node_modules
+COPY --from=prerelease /usr/src/app/index.ts .
+COPY --from=prerelease /usr/src/app/lib ./lib
+COPY --from=prerelease /usr/src/app/routes ./routes
+COPY --from=prerelease /usr/src/app/package.json .
 
-# Install packages needed for deployment
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y openssl && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 3003
-CMD [ "bun", "run", "start" ]
+# run the app
+USER bun
+EXPOSE 3003/tcp
+CMD ["bun", "run", "index.ts"]
