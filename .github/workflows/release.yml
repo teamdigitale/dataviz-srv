@@ -12,7 +12,9 @@ permissions:
   # To push Docker images to GitHub
   packages: write
   # To push Helm charts to GitHub
-  contents: read
+  contents: write
+  # To push commits and tags
+  actions: read
 
 jobs:
   docker-build:
