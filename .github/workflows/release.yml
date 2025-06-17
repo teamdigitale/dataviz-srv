@@ -1,24 +1,28 @@
-name: release
+name: 🚀 Release
 
 on:
   push:
-    branches: [main]
+    branches: [main, k8s-ready]
     tags:
       - "v*"
   pull_request:
-    branches: [main]
+    branches: [main, k8s-ready]
 
 permissions:
   # To push Docker images to GitHub
   packages: write
+  # To push Helm charts to GitHub
+  contents: read
 
 jobs:
   docker-build:
+    name: 🐳 Build Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📦 Checkout
         uses: actions/checkout@v4
-      - name: Docker meta
+        
+      - name: 🏷️ Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -30,22 +34,23 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - name: Set up QEMU
+            
+      - name: 🔧 Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: 🏗️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/amd64
 
-      - name: Login to GitHub Container Registry
+      - name: 🔐 Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
+      - name: 🚀 Build and push
         uses: docker/build-push-action@v6
         with:
           file: "Dockerfile"
@@ -54,3 +59,144 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  helm-release:
+    name: ⚓ Helm Chart Release
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/k8s-ready')
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 🔍 Check for Helm chart changes (excluding values files)
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            charts:
+              - 'charts/**'
+              - '!charts/**/values*.yaml'
+              - '!charts/**/values*.yml'
+
+      - name: ⚓ Install Helm
+        if: steps.changes.outputs.charts == 'true'
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: 🏷️ Auto-version Helm chart
+        if: steps.changes.outputs.charts == 'true'
+        id: version
+        run: |
+          cd charts/dataviz-srv
+          
+          # Get current version from Chart.yaml
+          CURRENT_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}' | tr -d '"')
+          
+          # If no version exists, start with 1.0.0
+          if [ -z "$CURRENT_VERSION" ] || [ "$CURRENT_VERSION" = "null" ]; then
+            NEW_VERSION="1.0.0"
+          else
+            # Parse version components
+            IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+            
+            # Increment patch version
+            NEW_VERSION="$major.$minor.$((patch + 1))"
+          fi
+          
+          echo "🏷️ Current version: $CURRENT_VERSION"
+          echo "🏷️ New version: $NEW_VERSION"
+          
+          # Update Chart.yaml with new version
+          sed -i "s/^version:.*/version: \"$NEW_VERSION\"/" Chart.yaml
+          
+          # Also update appVersion to match if it exists
+          if grep -q '^appVersion:' Chart.yaml; then
+            sed -i "s/^appVersion:.*/appVersion: \"$NEW_VERSION\"/" Chart.yaml
+          fi
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
+          # Show the changes
+          echo "📝 Updated Chart.yaml:"
+          cat Chart.yaml | grep -E '^(version|appVersion):'
+
+      - name: 🔍 Helm lint
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm lint charts/dataviz-srv
+
+      - name: ✅ Helm template validation
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm template dataviz-srv charts/dataviz-srv --values charts/dataviz-srv/values.yaml --dry-run
+
+      - name: 📝 Commit version bump
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add charts/dataviz-srv/Chart.yaml
+          git commit -m "🏷️ Bump Helm chart version to ${{ steps.version.outputs.new_version }}"
+          git push
+
+      - name: 📦 Package Helm chart
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm package charts/dataviz-srv
+
+      - name: 🔐 Login to GitHub Container Registry for Helm
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+      - name: 🚀 Push Helm chart
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm push dataviz-srv-${{ steps.version.outputs.new_version }}.tgz oci://ghcr.io/teamdigitale/helm-charts
+
+      - name: 🏷️ Create Git tag
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          git tag "helm-v${{ steps.version.outputs.new_version }}"
+          git push origin "helm-v${{ steps.version.outputs.new_version }}"
+
+  helm-validation:
+    name: 🔍 Helm Validation (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📦 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🔍 Check for Helm chart changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            charts:
+              - 'charts/**'
+
+      - name: ⚓ Install Helm
+        if: steps.changes.outputs.charts == 'true'
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: 🔍 Helm lint
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm lint charts/dataviz-srv
+
+      - name: ✅ Helm template validation
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          helm template dataviz-srv charts/dataviz-srv --values charts/dataviz-srv/values.yaml --dry-run
+
+      - name: 📊 Helm chart diff (if applicable)
+        if: steps.changes.outputs.charts == 'true'
+        run: |
+          echo "::notice title=Helm Changes::Helm chart changes detected in this PR. Please review the modifications."
