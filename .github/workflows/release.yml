@@ -121,15 +121,26 @@ jobs:
             NEW_VERSION="$major.$minor.$((patch + 1))"
           fi
           
-          echo "🏷️ Current version: $CURRENT_VERSION"
-          echo "🏷️ New version: $NEW_VERSION"
+          echo "🏷️ Current chart version: $CURRENT_VERSION"
+          echo "🏷️ New chart version: $NEW_VERSION"
           
-          # Update Chart.yaml with new version
+          # Update Chart.yaml with new chart version
           sed -i "s/^version:.*/version: \"$NEW_VERSION\"/" Chart.yaml
           
-          # Also update appVersion to match if it exists
-          if grep -q '^appVersion:' Chart.yaml; then
-            sed -i "s/^appVersion:.*/appVersion: \"$NEW_VERSION\"/" Chart.yaml
+          # Update appVersion only if this is a tag push (new app release)
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            # Extract version from tag (e.g., v1.2.3 -> 1.2.3)
+            APP_VERSION=${GITHUB_REF#refs/tags/}
+            APP_VERSION=${APP_VERSION#v}  # Remove 'v' prefix if present
+            
+            echo "🚀 This is a tag push, updating appVersion to: $APP_VERSION"
+            sed -i "s/^appVersion:.*/appVersion: \"$APP_VERSION\"/" Chart.yaml
+            
+            echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "📝 Branch push - keeping current appVersion unchanged"
+            CURRENT_APP_VERSION=$(grep '^appVersion:' Chart.yaml | awk '{print $2}' | tr -d '"')
+            echo "app_version=$CURRENT_APP_VERSION" >> $GITHUB_OUTPUT
           fi
           
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -154,7 +165,14 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add charts/dataviz-srv/Chart.yaml
-          git commit -m "🏷️ Bump Helm chart version to ${{ steps.version.outputs.new_version }}"
+          
+          # Create appropriate commit message
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            git commit -m "🏷️ Bump Helm chart to ${{ steps.version.outputs.new_version }} + app to ${{ steps.version.outputs.app_version }}"
+          else
+            git commit -m "🏷️ Bump Helm chart version to ${{ steps.version.outputs.new_version }}"
+          fi
+          
           git push
 
       - name: 📦 Package Helm chart
