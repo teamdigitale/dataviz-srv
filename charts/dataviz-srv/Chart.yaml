@@ -1,0 +1,19 @@
+apiVersion: v2
+name: dataviz-srv
+description: DataViz Dashboard Service Helm Chart
+type: application
+version: "0.1.3"
+appVersion: "0.1.1"
+icon: https://cdn.jsdelivr.net/npm/@mdi/svg@7.4.47/svg/view-dashboard.svg
+keywords:
+  - dataviz
+  - dashboard
+  - analytics
+maintainers:
+  - name: teamdigitale
+
+dependencies:
+  - name: postgresql
+    version: "^16.0.0"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled

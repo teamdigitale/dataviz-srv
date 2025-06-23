@@ -1,0 +1,126 @@
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: dataviz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dataviz
+      POSTGRES_USER: dataviz
+      POSTGRES_PASSWORD: dataviz123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dataviz -d dataviz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dataviz-network
+
+  # Redis per cache (opzionale)
+  redis:
+    image: redis:7-alpine
+    container_name: dataviz-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - dataviz-network
+
+  # Migrazione database
+  dataviz-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dataviz-migrate
+    environment:
+      DATABASE_URL: postgresql://dataviz:dataviz123@postgres:5432/dataviz
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dataviz-network
+    volumes:
+      # Mount solo per avere accesso al schema Prisma
+      - ./prisma:/usr/src/app/prisma:ro
+    working_dir: /usr/src/app
+    command: ["npx", "prisma", "migrate", "deploy"]
+    restart: "no"
+
+  # Applicazione DataViz
+  dataviz-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: dataviz-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://dataviz:dataviz123@postgres:5432/dataviz
+      JWT_SECRET: dev-jwt-secret-very-long-and-secure
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DOMAINS: http://localhost:3000,http://localhost:3001
+    ports:
+      - "3003:3003"
+    volumes:
+      # Hot reload per sviluppo - mount del codice sorgente
+      - .:/usr/src/app:cached
+      - /usr/src/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      dataviz-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3003/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - dataviz-network
+
+  # PgAdmin per gestione database (opzionale)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: dataviz-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@dataviz.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - dataviz-network
+    profiles:
+      - tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  dataviz-network:
+    driver: bridge
