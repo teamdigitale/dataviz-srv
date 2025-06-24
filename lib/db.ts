@@ -111,10 +111,34 @@ export async function createCode(userId: string) {
       userId,
     },
   });
-  return prisma.codes.create({
+  await prisma.codes.create({
     data: {
       userId,
       code,
+    },
+  });
+  return code;
+}
+
+export async function setVerifyed(id: string) {
+  return prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      verifyed: true,
+    },
+  });
+}
+
+export async function changePassword(id: string, newPassword: string) {
+  const password = bcrypt.hashSync(newPassword, 12);
+  return prisma.user.update({
+    where: {
+      id,
+    },
+    data: {
+      password,
     },
   });
 }

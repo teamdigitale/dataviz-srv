@@ -1,36 +1,47 @@
+import type { User } from "@prisma/client";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+console.log("RESEND_API_KEY", RESEND_API_KEY);
+const resend = new Resend(RESEND_API_KEY);
 const SENDER_EMAIL = process.env.SENDER_EMAIL || "";
-const HOST = process.env.HOST || "/";
+const HOST = process.env.HOST_URL || "/";
+const APP_URL = process.env.APP_URL || "/";
 const COPY = "Dataviz";
 
 async function sendMail(addresses: string[], html: string) {
-  await resend.emails.send({
+  const obj = {
     from: SENDER_EMAIL,
     to: addresses.join(";"),
     subject: "Activate Account",
+  };
+  const result = await resend.emails.send({
+    ...obj,
     html,
   });
+  console.log("RESULT", result);
+  return result;
 }
 
 function compileTemplate(template: string, data: any) {
   return template.replace(/\${(.*?)}/g, (_, key) => data[key]);
 }
 
-export async function sendActivationEmail(recipeint: string, pin: string[]) {
-  const html = activationTemplate(HOST, pin);
-  await sendMail([recipeint], html);
+export function sendActivationEmail(user: User, pin: string) {
+  const html = activationTemplate(user.id, pin);
+  console.log("html", html);
+  return sendMail([user.email], html);
 }
 
-export async function sendResetPasswordEmail(recipeint: string, pin: string[]) {
-  const html = resetTemplate(HOST, pin);
-  await sendMail([recipeint], html);
+export async function sendResetPasswordEmail(user: User, pin: string) {
+  const html = resetTemplate(user.id, pin);
+  return sendMail([user.email], html);
 }
 
-function resetTemplate(baseUrl: string, pin: string[]) {
-  const url = `${baseUrl}/auth/reset?pin=${pin.join("")}`;
+function resetTemplate(uid: string, pin: string) {
+  const url = `${APP_URL}/verify/${uid}?action=reset`;
   const code = pin
+    .split("")
     .map((item: string) => {
       return `<span><code style="display:inline;padding:16px 4.5%;width:auto;margin:0 4px;background-color:#f4f4f4;border-radius:5px;border:1px solid #eee;color:#333">${item}</code></span>`;
     })
@@ -40,9 +51,10 @@ function resetTemplate(baseUrl: string, pin: string[]) {
   `;
 }
 
-function activationTemplate(baseUrl: string, pin: string[]) {
-  const url = `${baseUrl}/auth/activate?pin=${pin.join("")}`;
+function activationTemplate(uid: string, pin: string) {
+  const url = `${APP_URL}/verify/${uid}?action=init`;
   const code = pin
+    .split("")
     .map((item: string) => {
       return `<span><code style="display:inline;padding:16px 4.5%;width:auto;margin:0 4px;background-color:#f4f4f4;border-radius:5px;border:1px solid #eee;color:#333">${item}</code></span>`;
     })

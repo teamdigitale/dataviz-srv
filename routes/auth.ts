@@ -4,7 +4,6 @@ import * as db from "../lib/db";
 import { generateTokens, sendAccessToken } from "../lib/jwt";
 import { validateRequest } from "../lib/middlewares";
 import * as z from "zod";
-import generatePin from "../lib/pin";
 import { sendActivationEmail } from "../lib/email";
 
 const registerSchema = z.object({
@@ -47,20 +46,19 @@ router.post(
       }
       const existingUser = await db.findUserByEmail(email);
       if (existingUser) {
-        res.status(400);
-        throw new Error("Email already in use.");
+        res.status(409);
+        return res.json({ error: { message: "Email already in use." } });
       }
       const user = await db.createUserByEmailAndPassword({ email, password });
-
       //@TODO SEND EMAIL TO ACTIVATE USER
-      const pin = generatePin();
-
-      sendActivationEmail(email, pin);
+      const pin = await db.createCode(user.id);
+      console.log("pin", pin);
+      await sendActivationEmail(user, pin);
 
       // const { accessToken } = generateTokens(user);
       // sendAccessToken(res, accessToken);
 
-      res.json({ auth: true });
+      return res.json({ auth: true });
     } catch (err) {
       next(err);
     }
@@ -110,6 +108,41 @@ router.post(
 
 router.get("/logout", (req: any, res) => {
   res.clearCookie("access_token");
+  return res.status(204);
+});
+
+router.post("/verify", (req: any, res) => {
+  const { uid, code } = req.body;
+  console.log("uid", uid);
+  console.log("code", code);
+  return res.json({ uid, code });
+});
+
+// router.get("/mail/:uid", async (req, res) => {
+//   const uid = req.params.uid;
+//   const pin = await db.createCode(uid);
+//   const email = "point.point@gmail.com";
+//   console.log("pin", pin);
+//   console.log("email", email);
+//   await sendActivationEmail(email, pin);
+//   return res.status(204);
+// });
+
+router.get("/init", (req: any, res) => {
+  const user = req.user;
+  if (!user) {
+    return res.status(400).json({ error: "User and password are required." });
+  }
+  return res.status(204);
+});
+
+router.put("/pwd", async (req: any, res) => {
+  const user = req.user;
+  const { password } = req.body;
+  if (!user || !password) {
+    return res.status(400).json({ error: "User and password are required." });
+  }
+  await db.changePassword(user.id, password);
   return res.status(204);
 });
 
