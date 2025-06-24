@@ -14,11 +14,14 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(cuid())
-  email     String      @unique
-  password  String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id       String  @id @default(cuid())
+  email    String  @unique
+  password String
+  verifyed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   Chart     Chart[]
   Dashboard Dashboard[]
 }
