@@ -93,15 +93,13 @@ export async function findCodeByUid(userId: string) {
       userId,
     },
   });
-  let expired = true;
+  if (!result) return null;
 
-  if (result) {
-    expired =
-      new Date(result.updatedAt).getMilliseconds() + result?.expire * 1000 <
-      Date.now();
-  }
+  const isExpired =
+    new Date(result.updatedAt).getMilliseconds() + result?.expire * 1000 <
+    Date.now();
 
-  return expired ? null : result;
+  return isExpired ? null : result.code;
 }
 
 export async function createCode(userId: string) {
@@ -120,7 +118,7 @@ export async function createCode(userId: string) {
   return code;
 }
 
-export async function setVerifyed(id: string) {
+export function setVerifyed(id: string) {
   return prisma.user.update({
     where: {
       id,
@@ -139,6 +137,14 @@ export async function changePassword(id: string, newPassword: string) {
     },
     data: {
       password,
+    },
+  });
+}
+
+export function destroyCodes(userId: string) {
+  return prisma.codes.deleteMany({
+    where: {
+      userId,
     },
   });
 }
