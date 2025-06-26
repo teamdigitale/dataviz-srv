@@ -68,7 +68,7 @@ export function hashToken(token: string) {
 //   });
 // }
 
-export function sendAccessToken(res: Response, token: string) {
+export function setAccessTokenCookie(res: Response, token: string) {
   const expires = new Date(Date.now() + 60 * 60 * 1000);
   const isProduction = process.env.NODE_ENV === "production";
   const cookieOptions: CookieOptions = {

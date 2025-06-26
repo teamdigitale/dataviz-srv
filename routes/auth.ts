@@ -1,10 +1,50 @@
 import { Router } from "express";
 import * as bcrypt from "bcrypt";
 import * as db from "../lib/db";
-import { generateTokens, sendAccessToken } from "../lib/jwt";
-import { validateRequest } from "../lib/middlewares";
+import { generateTokens, setAccessTokenCookie } from "../lib/jwt";
 import * as z from "zod";
 import { sendActivationEmail } from "../lib/email";
+import { requireUser, validateRequest } from "../lib/middlewares";
+
+const APP_URL = process.env.APP_URL || "/";
+
+const router = Router();
+
+async function validateCode(req: any, res: any, uid: string, code: string) {
+  console.log("uid", uid, "code", code);
+  if (!uid || !code) return res.status(401);
+  if (req.user) {
+    if (req.use.id !== uid) {
+      return res.status(400).json({ error: "Invalid user activation." });
+    }
+  }
+  const user = await db.findUserById(uid);
+  if (!user) {
+    return res.status(400).json({ error: "User not found." });
+  }
+  const pin = await db.findCodeByUid(uid);
+  if (!pin || pin !== code) {
+    return res.status(400).json({ error: "Code invalid or expired." });
+  }
+  const userValue = await db.setVerifyed(user.id);
+  await db.destroyCodes(user.id);
+  const { accessToken } = generateTokens(userValue);
+  setAccessTokenCookie(res, accessToken);
+}
+
+router.get("/user", (req: any, res) => {
+  console.log("check user");
+  try {
+    const user = req?.user || null;
+    if (!user) {
+      return res.status(401).json(null);
+    }
+    console.log("user found", user);
+    return res.status(201).json({ user });
+  } catch (error) {
+    console.log("Auth user ERROR", error);
+  }
+});
 
 const registerSchema = z.object({
   email: z
@@ -16,24 +56,6 @@ const registerSchema = z.object({
     .string({ required_error: "Password is required" })
     .min(7, "Password must be at least 7 characters long"),
 });
-
-const router = Router();
-
-router.get("/user", (req: any, res) => {
-  console.log("check user");
-  try {
-    const user = req?.user || null;
-    console.log("user", user);
-    if (!user) {
-      res.status(401).json(null);
-    }
-    return res.status(201).json({ user });
-  } catch (error) {
-    console.log("ERROR", error);
-  }
-  return res.json({ message: "hello" });
-});
-
 router.post(
   "/register",
   validateRequest({ body: registerSchema }),
@@ -95,7 +117,7 @@ router.post(
         throw new Error("Invalid login credentials.");
       }
       const { accessToken } = generateTokens(existingUser);
-      sendAccessToken(res, accessToken);
+      setAccessTokenCookie(res, accessToken);
       // res.json({
       //   accessToken,
       // });
@@ -106,44 +128,89 @@ router.post(
   }
 );
 
+const recoverSchema = z.object({
+  email: z
+    .string({
+      required_error: "Email is required",
+    })
+    .email("Invalid email or password"),
+});
+
+router.post(
+  "/recover",
+  validateRequest({ body: recoverSchema }),
+  async (req: any, res) => {
+    res.clearCookie("access_token");
+    const { email } = req.body;
+    const user = await db.findUserByEmail(email);
+    if (user) {
+      const pin = await db.createCode(user.id);
+      console.log("pin", pin);
+    }
+    return res.status(200);
+  }
+);
+
 router.get("/logout", (req: any, res) => {
   res.clearCookie("access_token");
   return res.status(204);
 });
 
-router.post("/verify", (req: any, res) => {
-  const { uid, code } = req.body;
-  console.log("uid", uid);
-  console.log("code", code);
-  return res.json({ uid, code });
+const verifySchema = z.object({
+  uid: z.string({
+    required_error: "uid is required",
+  }),
+  code: z.string({ required_error: "code is required" }),
 });
-
-// router.get("/mail/:uid", async (req, res) => {
-//   const uid = req.params.uid;
-//   const pin = await db.createCode(uid);
-//   const email = "point.point@gmail.com";
-//   console.log("pin", pin);
-//   console.log("email", email);
-//   await sendActivationEmail(email, pin);
-//   return res.status(204);
-// });
-
-router.get("/init", (req: any, res) => {
-  const user = req.user;
-  if (!user) {
-    return res.status(400).json({ error: "User and password are required." });
+router.post(
+  "/verify",
+  validateRequest({ body: verifySchema }),
+  async (req: any, res) => {
+    const { uid, code } = req.body;
+    await validateCode(req, res, uid, code);
+    return res.json({ auth: true });
   }
-  return res.status(204);
-});
+);
 
-router.put("/pwd", async (req: any, res) => {
-  const user = req.user;
-  const { password } = req.body;
-  if (!user || !password) {
-    return res.status(400).json({ error: "User and password are required." });
-  }
-  await db.changePassword(user.id, password);
-  return res.status(204);
+const confirmSchema = z.object({
+  uid: z.string({
+    required_error: "uid is required",
+  }),
+  code: z.string({ required_error: "code is required" }),
 });
+router.get(
+  "/confirm/:uid/:code",
+  validateRequest({ params: confirmSchema }),
+  async (req: any, res) => {
+    const { uid, code } = req.params;
+    await validateCode(req, res, uid, code);
+    // return res.json({ auth: true });
+    return res.redirect(APP_URL);
+  }
+);
+
+const changePwdSchema = z.object({
+  email: z
+    .string({
+      required_error: "Email is required",
+    })
+    .email("Invalid email or password"),
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(7, "Password must be at least 7 characters long"),
+});
+router.put(
+  "/pwd",
+  [validateRequest({ body: changePwdSchema }), requireUser],
+  async (req: any, res: any) => {
+    const user = req.user;
+    const { password } = req.body;
+    if (!user || !password) {
+      return res.status(400).json({ error: "User and password are required." });
+    }
+    await db.changePassword(user.id, password);
+    return res.status(204);
+  }
+);
 
 export default router;
