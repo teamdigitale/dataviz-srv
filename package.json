@@ -26,6 +26,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cuid": "^3.0.0",
+    "dayjs": "^1.11.13",
     "express": "^4.19.2",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",

@@ -33,6 +33,7 @@ export function validateRequest(validators: RequestValidators) {
         req.params = await validators.params.parseAsync(req.params);
       }
       if (validators.body) {
+        console.log(JSON.stringify(req.body, null, 2));
         req.body = await validators.body.parseAsync(req.body);
       }
       if (validators.query) {
@@ -40,7 +41,9 @@ export function validateRequest(validators: RequestValidators) {
       }
       next();
     } catch (error) {
+      console.log("ERROR VALIDATING REQUEST SCHEMA", error);
       if (error instanceof ZodError) {
+        console.log("ZOD ERROR");
         res.status(400);
       }
       next(error);
@@ -53,14 +56,15 @@ export function checkAuthCookie(req: any, res: Response, next: NextFunction) {
   console.log("Cookies: ", req.cookies);
   try {
     const accessToken = req.cookies["access_token"] || null;
-    console.log("ACCESS TOKEN", accessToken);
+    // console.log("ACCESS TOKEN", accessToken);
     if (!accessToken) {
       return;
     }
     const payload = verifyAccessToken(accessToken) as any;
+    console.log("checkAuthCookie user", payload);
     req.user = payload;
   } catch (error) {
-    console.log("ERROR", error);
+    console.log("checkAuthCookie ERROR", error);
     req.user = null;
   } finally {
     next();
@@ -92,6 +96,7 @@ export function requireUser(req: any, res: Response, next: NextFunction) {
       res.status(401);
       throw new Error("Unauthorized.");
     }
+    console.log("user is ok");
 
     next();
   } catch (error) {

@@ -27,11 +27,13 @@ app.use(
   cors({
     origin: ["localhost", "http://localhost:3000"],
     credentials: true,
+    methods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
+// app.use(express.bodyParser({ limit: "2mb" }));
 app.use(cookieParser());
-app.use(express.json());
 app.use(middlewares.checkAuthCookie);
+app.use(express.json({ limit: "500kb" }));
 // app.use(middlewares.deserializeUser);
 const port = 3003;
 
