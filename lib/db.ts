@@ -2,6 +2,7 @@ import type { Chart, Prisma, User } from "@prisma/client";
 import { PrismaClient } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 import generatePin from "./pin";
+import dayjs from "dayjs";
 
 export const prisma = new PrismaClient();
 
@@ -93,11 +94,18 @@ export async function findCodeByUid(userId: string) {
       userId,
     },
   });
+  console.log("findCodeByUid", result);
   if (!result) return null;
 
-  const isExpired =
-    new Date(result.updatedAt).getMilliseconds() + result?.expire * 1000 <
-    Date.now();
+  const ts = dayjs(result.createdAt);
+  console.log("ts", ts.format("HH:mm:ss"));
+  const anHour = 60 * 60 * 1000;
+  // const amount = (result?.expire || 60 * aminute;
+  console.log("amount", anHour);
+  const now = dayjs(new Date(Date.now() - anHour));
+  console.log("now - amount", now.format("HH:mm:ss"));
+  const isExpired = ts < now;
+  console.log("isExpired?", isExpired);
 
   return isExpired ? null : result.code;
 }

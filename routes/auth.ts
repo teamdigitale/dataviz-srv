@@ -1,7 +1,11 @@
 import { Router } from "express";
 import * as bcrypt from "bcrypt";
 import * as db from "../lib/db";
-import { generateTokens, setAccessTokenCookie } from "../lib/jwt";
+import {
+  generateTokens,
+  setAccessTokenCookie,
+  clearAccestokenCookie,
+} from "../lib/jwt";
 import * as z from "zod";
 import { sendActivationEmail } from "../lib/email";
 import { requireUser, validateRequest } from "../lib/middlewares";
@@ -9,28 +13,6 @@ import { requireUser, validateRequest } from "../lib/middlewares";
 const APP_URL = process.env.APP_URL || "/";
 
 const router = Router();
-
-async function validateCode(req: any, res: any, uid: string, code: string) {
-  console.log("uid", uid, "code", code);
-  if (!uid || !code) return res.status(401);
-  if (req.user) {
-    if (req.use.id !== uid) {
-      return res.status(400).json({ error: "Invalid user activation." });
-    }
-  }
-  const user = await db.findUserById(uid);
-  if (!user) {
-    return res.status(400).json({ error: "User not found." });
-  }
-  const pin = await db.findCodeByUid(uid);
-  if (!pin || pin !== code) {
-    return res.status(400).json({ error: "Code invalid or expired." });
-  }
-  const userValue = await db.setVerifyed(user.id);
-  await db.destroyCodes(user.id);
-  const { accessToken } = generateTokens(userValue);
-  setAccessTokenCookie(res, accessToken);
-}
 
 router.get("/user", (req: any, res) => {
   console.log("check user");
@@ -140,7 +122,7 @@ router.post(
   "/recover",
   validateRequest({ body: recoverSchema }),
   async (req: any, res) => {
-    res.clearCookie("access_token");
+    clearAccestokenCookie(res);
     const { email } = req.body;
     const user = await db.findUserByEmail(email);
     if (user) {
@@ -152,7 +134,8 @@ router.post(
 );
 
 router.get("/logout", (req: any, res) => {
-  res.clearCookie("access_token");
+  console.log("logout, bye");
+  clearAccestokenCookie(res);
   return res.status(204);
 });
 
@@ -167,7 +150,28 @@ router.post(
   validateRequest({ body: verifySchema }),
   async (req: any, res) => {
     const { uid, code } = req.body;
-    await validateCode(req, res, uid, code);
+    console.log("uid:", uid, ", code:", code);
+    if (!uid || !code) return res.status(401);
+    if (req.user) {
+      console.log("req.user?", req.user);
+      if (req.user.id !== uid) {
+        return res.status(400).json({ error: "Invalid user activation." });
+      }
+    }
+    const user = await db.findUserById(uid);
+    console.log("user?", user);
+    if (!user) {
+      return res.status(400).json({ error: "User not found." });
+    }
+    const pin = await db.findCodeByUid(uid);
+    console.log("pin?", pin);
+    if (!pin || pin !== code) {
+      return res.status(400).json({ error: "Code invalid or expired." });
+    }
+    const userValue = await db.setVerifyed(user.id);
+    await db.destroyCodes(user.id);
+    const { accessToken } = generateTokens(userValue);
+    setAccessTokenCookie(res, accessToken);
     return res.json({ auth: true });
   }
 );
@@ -183,7 +187,29 @@ router.get(
   validateRequest({ params: confirmSchema }),
   async (req: any, res) => {
     const { uid, code } = req.params;
-    await validateCode(req, res, uid, code);
+    console.log("uid:", uid, ", code:", code);
+    if (!uid || !code) return res.status(401);
+    if (req.user) {
+      console.log("req.user?", req.user);
+      if (req.user.userId !== uid) {
+        return res.status(400).json({ error: "Invalid user activation." });
+      }
+    }
+    const user = await db.findUserById(uid);
+    console.log("user?", user);
+    if (!user) {
+      return res.status(400).json({ error: "User not found." });
+    }
+    const pin = await db.findCodeByUid(uid);
+    console.log("pin?", pin);
+    if (!pin || pin !== code) {
+      return res.status(400).json({ error: "Code invalid or expired." });
+    }
+    const userValue = await db.setVerifyed(user.id);
+    await db.destroyCodes(user.id);
+    const { accessToken } = generateTokens(userValue);
+    setAccessTokenCookie(res, accessToken);
+    console.log("validate code end");
     // return res.json({ auth: true });
     return res.redirect(APP_URL);
   }

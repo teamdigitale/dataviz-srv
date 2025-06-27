@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import * as jwt from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 import type { User } from "@prisma/client";
 import type { CookieOptions, Response } from "express";
 
@@ -23,7 +23,7 @@ export function generateAccessToken(
   console.log("Generating AccessToken", payload);
   console.log("expiresIn", expiresIn);
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return sign(payload, JWT_SECRET, {
     expiresIn,
   });
 }
@@ -49,7 +49,7 @@ export function generateTokens(user: User) {
 export function verifyAccessToken(token: string) {
   // console.log("Verifying AccessToken", token);
   try {
-    return jwt.verify(token, JWT_SECRET) as IAccessTokenPayload;
+    return verify(token, JWT_SECRET) as IAccessTokenPayload;
   } catch (error) {
     console.log("Error verifyng AccessToken", error);
     throw error;
@@ -81,4 +81,8 @@ export function setAccessTokenCookie(res: Response, token: string) {
   };
   console.log("COOKIE OPTIONS", cookieOptions);
   res.cookie("access_token", token, cookieOptions);
+}
+
+export function clearAccestokenCookie(res: Response) {
+  res.clearCookie("access_token");
 }

@@ -110,11 +110,17 @@ router.get(
 /** Create */
 router.post(
   "/",
-  [validateRequest({ body: createChartSchema }), requireUser],
+  // [validateRequest({ body: createChartSchema }), requireUser],
   async (req: any, res: any, next: any) => {
     try {
-      const user: ParsedToken = req.user;
       const { body } = req;
+      console.log("CREATE CHART", body);
+      
+      const user: ParsedToken = req.user;
+      console.log("user?", user);
+
+      if (!req) throw new Error("empty data");
+
       const chartData = {
         userId: user.userId,
         ...body,
