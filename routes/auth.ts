@@ -7,7 +7,7 @@ import {
   clearAccestokenCookie,
 } from "../lib/jwt";
 import * as z from "zod";
-import { sendActivationEmail } from "../lib/email";
+import { sendActivationEmail, sendResetPasswordEmail } from "../lib/email";
 import { requireUser, validateRequest } from "../lib/middlewares";
 
 const APP_URL = process.env.APP_URL || "/";
@@ -124,10 +124,13 @@ router.post(
   async (req: any, res) => {
     clearAccestokenCookie(res);
     const { email } = req.body;
+    console.log("recover", email);
     const user = await db.findUserByEmail(email);
     if (user) {
+      console.log("user", user);
       const pin = await db.createCode(user.id);
       console.log("pin", pin);
+      await sendResetPasswordEmail(user, pin);
     }
     return res.status(200);
   }
@@ -165,11 +168,20 @@ router.post(
     }
     const pin = await db.findCodeByUid(uid);
     console.log("pin?", pin);
-    if (!pin || pin !== code) {
+    if (!pin) {
+      console.log("pin not found");
       return res.status(400).json({ error: "Code invalid or expired." });
     }
+    if (`${pin}`.trim() !== `${code}`.trim()) {
+      console.log("pin are not equals");
+      return res.status(400).json({ error: "Code invalid or expired." });
+    }
+    console.log("user verifyed");
     const userValue = await db.setVerifyed(user.id);
+
     await db.destroyCodes(user.id);
+
+    console.log("login user");
     const { accessToken } = generateTokens(userValue);
     setAccessTokenCookie(res, accessToken);
     return res.json({ auth: true });
