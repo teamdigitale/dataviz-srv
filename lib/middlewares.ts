@@ -1,7 +1,7 @@
-import { verifyAccessToken } from "./jwt";
-import { ZodError } from "zod";
-import type { ErrorResponse, RequestValidators } from "../types";
-import type { NextFunction, Response, Request } from "express";
+import { verifyAccessToken } from './jwt';
+import { ZodError } from 'zod';
+import type { ErrorResponse, RequestValidators } from '../types';
+import type { NextFunction, Response, Request } from 'express';
 
 export function notFound(req: Request, res: Response, next: NextFunction) {
   res.status(404);
@@ -21,7 +21,7 @@ export function errorHandler(
   res.json({
     error: {
       message: err.message,
-      stack: process.env.NODE_ENV === "production" ? "🥞" : err.stack,
+      stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack,
     },
   });
 }
@@ -41,9 +41,9 @@ export function validateRequest(validators: RequestValidators) {
       }
       next();
     } catch (error) {
-      console.log("ERROR VALIDATING REQUEST SCHEMA", error);
+      console.log('ERROR VALIDATING REQUEST SCHEMA', error);
       if (error instanceof ZodError) {
-        console.log("ZOD ERROR");
+        console.log('ZOD ERROR');
         res.status(400);
       }
       next(error);
@@ -52,19 +52,20 @@ export function validateRequest(validators: RequestValidators) {
 }
 
 export function checkAuthCookie(req: any, res: Response, next: NextFunction) {
-  console.log("checkAuthCookie");
-  console.log("Cookies: ", req.cookies);
+  console.log('checkAuthCookie');
+  console.log('Cookies: ', req.cookies);
   try {
-    const accessToken = req.cookies["access_token"] || null;
+    const accessToken = req.cookies['access_token'] || null;
     // console.log("ACCESS TOKEN", accessToken);
     if (!accessToken) {
       return;
     }
     const payload = verifyAccessToken(accessToken) as any;
-    console.log("checkAuthCookie user", payload);
+    console.log('checkAuthCookie user', payload);
     req.user = payload;
+    req.token = accessToken;
   } catch (error) {
-    console.log("checkAuthCookie ERROR", error);
+    console.log('checkAuthCookie ERROR', error);
     req.user = null;
   } finally {
     next();
@@ -73,9 +74,9 @@ export function checkAuthCookie(req: any, res: Response, next: NextFunction) {
 
 export function deserializeUser(req: any, res: Response, next: NextFunction) {
   try {
-    const accessToken = (req.headers.authorization || "").replace(
+    const accessToken = (req.headers.authorization || '').replace(
       /^Bearer\s/,
-      ""
+      ''
     );
     if (!accessToken) {
       return next();
@@ -94,9 +95,9 @@ export function requireUser(req: any, res: Response, next: NextFunction) {
     const user = req.user;
     if (!user) {
       res.status(401);
-      throw new Error("Unauthorized.");
+      throw new Error('Unauthorized.');
     }
-    console.log("user is ok");
+    console.log('user is ok');
 
     next();
   } catch (error) {
