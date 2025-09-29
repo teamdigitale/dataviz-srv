@@ -46,13 +46,15 @@ router.post(
     try {
       const { email, password } = req.body;
       if (!email || !password) {
-        res.status(400);
-        throw new Error('You must provide an email and a password.');
+        return res.status(400).json({
+          error: { message: 'You must provide an email and a password.' },
+        });
       }
       const existingUser = await db.findUserByEmail(email);
       if (existingUser) {
-        res.status(409);
-        return res.json({ error: { message: 'Email already in use.' } });
+        return res
+          .status(409)
+          .json({ error: { message: 'Email already in use.' } });
       }
       const user = await db.createUserByEmailAndPassword({ email, password });
       //@TODO SEND EMAIL TO ACTIVATE USER
@@ -63,7 +65,7 @@ router.post(
       // const { accessToken } = generateTokens(user);
       // sendAccessToken(res, accessToken);
 
-      return res.json({ auth: true });
+      return res.status(200).json({ auth: true });
     } catch (err) {
       next(err);
     }
@@ -133,14 +135,16 @@ router.post(
       console.log('pin', pin);
       await sendResetPasswordEmail(user, pin);
     }
-    return res.status(200);
+    return res.status(200).json(true);
   }
 );
 
 router.get('/logout', (req: any, res) => {
   console.log('logout, bye');
+  // res.clearCookie('access_token');
   clearAccestokenCookie(res);
-  return res.status(204);
+  console.log('removed cookies, return');
+  return res.status(200).json(true);
 });
 
 const verifySchema = z.object({
@@ -155,7 +159,8 @@ router.post(
   async (req: any, res) => {
     const { uid, code } = req.body;
     console.log('uid:', uid, ', code:', code);
-    if (!uid || !code) return res.status(401);
+    if (!uid || !code)
+      return res.status(401).json({ error: 'Invalid user activation.' });
     if (req.user) {
       console.log('req.user?', req.user);
       if (req.user.id !== uid) {
@@ -173,8 +178,8 @@ router.post(
       console.log('pin not found');
       return res.status(400).json({ error: 'Code invalid or expired.' });
     }
-    if (`${pin}`.trim() !== `${code}`.trim()) {
-      console.log('pin are not equals');
+    if (`${pin}`.trim() != `${code}`.trim()) {
+      console.log('pin are not equals', pin, code);
       return res.status(400).json({ error: 'Code invalid or expired.' });
     }
     console.log('user verifyed');
@@ -229,11 +234,6 @@ router.get(
 );
 
 const changePwdSchema = z.object({
-  email: z
-    .string({
-      required_error: 'Email is required',
-    })
-    .email('Invalid email or password'),
   password: z
     .string({ required_error: 'Password is required' })
     .min(7, 'Password must be at least 7 characters long'),
@@ -243,12 +243,14 @@ router.put(
   [validateRequest({ body: changePwdSchema }), requireUser],
   async (req: any, res: any) => {
     const user = req.user;
+    console.log('user', user);
     const { password } = req.body;
+    console.log('password', password);
     if (!user || !password) {
       return res.status(400).json({ error: 'User and password are required.' });
     }
-    await db.changePassword(user.id, password);
-    return res.status(204);
+    await db.changePassword(user.userId, password);
+    return res.status(204).json(true);
   }
 );
 
