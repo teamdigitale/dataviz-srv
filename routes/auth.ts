@@ -233,11 +233,27 @@ router.get(
   }
 );
 
+const passwordSchema = z
+  .string({ required_error: 'Password is required' })
+  .min(8, { message: 'Password must be at least 8 characters long' })
+  // .max(20, { message: maxLengthErrorMessage })
+  .refine((password) => /[A-Z]/.test(password), {
+    message: 'Password must have at least one uppercase letter',
+  })
+  .refine((password) => /[a-z]/.test(password), {
+    message: 'Password must have at least one lowercase letter',
+  })
+  .refine((password) => /[0-9]/.test(password), {
+    message: 'Must contain a number',
+  })
+  .refine((password) => /[!@#$%^&*]/.test(password), {
+    message: 'Must contain at least one special character',
+  });
+
 const changePwdSchema = z.object({
-  password: z
-    .string({ required_error: 'Password is required' })
-    .min(7, 'Password must be at least 7 characters long'),
+  password: passwordSchema,
 });
+
 router.put(
   '/pwd',
   [validateRequest({ body: changePwdSchema }), requireUser],
