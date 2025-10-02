@@ -37,7 +37,7 @@ app.use(express.json({ limit: '500kb' }));
 const port = 3003;
 
 app.get('/', (req, res) => {
-  res.json('Hello World!');
+  res.json('^^');
 });
 
 /* SEED

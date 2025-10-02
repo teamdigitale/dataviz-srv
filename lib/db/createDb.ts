@@ -1,6 +1,8 @@
 type IncludeParams = { [key: string]: boolean | IncludeParams };
 
-function createRepository<CreateInput, UpdateInput, WhereInput>(model: any) {
+export default function createDb<CreateInput, UpdateInput, WhereInput>(
+  model: any
+) {
   return {
     findById: (id: string, params?: { include: IncludeParams }) => {
       const args: {
@@ -11,7 +13,6 @@ function createRepository<CreateInput, UpdateInput, WhereInput>(model: any) {
       if (params?.include) {
         args.include = params.include;
       }
-
       return model.findUnique(args);
     },
     find: (where?: WhereInput) => model.findMany({ where }),
@@ -21,5 +22,3 @@ function createRepository<CreateInput, UpdateInput, WhereInput>(model: any) {
     deleteById: (id: string) => model.delete({ where: { id } }),
   };
 }
-
-export default createRepository;
