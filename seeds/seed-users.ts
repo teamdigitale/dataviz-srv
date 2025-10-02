@@ -1,18 +1,18 @@
-import * as db from "../lib/db";
+import * as db from '../lib/db/db';
 
 async function seedUsers() {
   const items = [
     {
-      email: "lp@lp.lp",
-      password: "lp@lp.lp",
+      email: 'lp@lp.lp',
+      password: 'lp@lp.lp',
     },
     {
-      email: "lorezz.me@gmail.com",
-      password: "lorezz.me@gmail.com",
+      email: 'lorezz.me@gmail.com',
+      password: 'lorezz.me@gmail.com',
     },
     {
-      email: "vale@com.o",
-      password: "vale@com.o",
+      email: 'vale@com.o',
+      password: 'vale@com.o',
     },
   ];
   for (const item of items) {
@@ -23,11 +23,11 @@ async function seedUsers() {
 export default async function main() {
   let users = await db.getUsers();
   if (users.length === 0) {
-    console.log("Seeding users...");
+    console.log('Seeding users...');
     seedUsers();
     users = await db.getUsers();
   }
-  console.log("users", users);
+  console.log('users', users);
   return users;
 }
 

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import * as bcrypt from 'bcrypt';
-import * as db from '../lib/db';
+import db from '../lib/db';
 import {
   generateTokens,
   setAccessTokenCookie,

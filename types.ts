@@ -1,7 +1,7 @@
-import * as z from "zod";
+import * as z from 'zod';
 
 export const paramsWithIdSchema = z.object({
-  id: z.string().min(1, "Invalid id"),
+  id: z.string().min(1, 'Invalid id'),
 });
 
 export type ParamsWithId = z.infer<typeof paramsWithIdSchema>;
@@ -32,4 +32,5 @@ export interface TokensResponseInterface {
 export interface ParsedToken {
   exp: number;
   userId: string;
+  name: string;
 }

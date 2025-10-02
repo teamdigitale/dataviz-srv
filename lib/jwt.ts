@@ -76,7 +76,7 @@ export function setAccessTokenCookie(res: Response, token: string) {
   const cookieOptions: CookieOptions = {
     expires,
     httpOnly: true,
-    // sameSite: "lax",
+    sameSite: 'lax',
     // sameSite: "none",
     // domain: isProduction ? process.env.DOMAIN : "",
     secure: isProduction ? true : false,
