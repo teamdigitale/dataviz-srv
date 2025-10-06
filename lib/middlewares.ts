@@ -69,11 +69,11 @@ export function checkAuth(req: any, res: Response, next: NextFunction) {
     console.log('USER', payload);
     req.user = payload;
     req.token = accessToken;
+    next();
   } catch (error) {
     console.error('checkAuth ERROR', error);
     req.user = null;
-  } finally {
-    next();
+    return res.status(401).json({ error });
   }
 }
 

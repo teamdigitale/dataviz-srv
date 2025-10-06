@@ -58,7 +58,7 @@ export async function changePassword(id: string, newPassword: string) {
 }
 
 export async function findCodeByUid(userId: string) {
-  const result = await prisma.codes.findFirst({
+  const result = await prisma.code.findFirst({
     where: {
       userId,
     },
@@ -73,12 +73,12 @@ export async function findCodeByUid(userId: string) {
 
 export async function createCode(userId: string) {
   const code = generatePin();
-  await prisma.codes.deleteMany({
+  await prisma.code.deleteMany({
     where: {
       userId,
     },
   });
-  await prisma.codes.create({
+  await prisma.code.create({
     data: {
       userId,
       code,
@@ -88,7 +88,7 @@ export async function createCode(userId: string) {
 }
 
 export function destroyCodes(userId: string) {
-  return prisma.codes.deleteMany({
+  return prisma.code.deleteMany({
     where: {
       userId,
     },
