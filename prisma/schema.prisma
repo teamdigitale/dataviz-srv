@@ -22,11 +22,24 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Chart     Chart[]
-  Dashboard Dashboard[]
+  Chart      Chart[]
+  Dashboard  Dashboard[]
   DataSource DataSource[]
+
+  Code Code[]
 }
 
+model Code {
+  id     String @id @default(cuid())
+  code   String
+  expire Int    @default(60)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
 
 model DataSource {
   id          String  @id @default(cuid())
@@ -43,10 +56,10 @@ model DataSource {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  SourceLink SourceLink[]
 }
-
 
 model Chart {
   id          String  @id @default(cuid())
@@ -66,22 +79,21 @@ model Chart {
 
   slot Slot[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  SourceLink SourceLink[]
 }
 
-model Slot {
-  dashboard   Dashboard @relation(fields: [dashboardId], references: [id])
-  dashboardId String
-  chart       Chart     @relation(fields: [chartId], references: [id])
-  chartId     String
-  settings    Json?
-  name        String?
-  description String? @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model SourceLink {
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id])
+  dataSourceId String
+  chart        Chart      @relation(fields: [chartId], references: [id])
+  chartId      String
+  config       Json?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
-  @@id([dashboardId, chartId])
+  @@id([dataSourceId, chartId])
 }
 
 model Dashboard {
@@ -99,11 +111,16 @@ model Dashboard {
   updatedAt DateTime @updatedAt
 }
 
-model Codes {
-  id        String   @id @default(cuid())
-  code      String
-  userId    String
-  expire    Int      @default(60)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Slot {
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id])
+  dashboardId String
+  chart       Chart     @relation(fields: [chartId], references: [id])
+  chartId     String
+  settings    Json?
+  name        String?
+  description String?   @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@id([dashboardId, chartId])
 }
