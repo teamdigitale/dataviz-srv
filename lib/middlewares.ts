@@ -55,20 +55,22 @@ export function checkAuth(req: any, res: Response, next: NextFunction) {
   console.log('checkAuth');
   let accessToken;
   try {
-    // console.log('checkAuthCookie');
-    // console.log('Cookies: ', req.cookies);
+    console.log('checkAuthCookie');
+    console.log('Cookies: ', req.cookies);
     accessToken = req.cookies['access_token'];
     if (!accessToken) {
-      // console.log('checkAuthBearer');
-      // console.log('Bearer: ', req.headers.authorization);
+      console.log('checkAuthBearer');
+      console.log('Bearer: ', req.headers.authorization);
       accessToken = (req.headers.authorization || '').replace(/^Bearer\s/, '');
-      if (!accessToken) return;
     }
-    // console.log('ACCESS TOKEN', accessToken);
-    const payload = verifyAccessToken(accessToken) as any;
-    console.log('USER', payload);
-    req.user = payload;
-    req.token = accessToken;
+
+    if (accessToken) {
+      console.log('ACCESS TOKEN', accessToken);
+      const payload = verifyAccessToken(accessToken) as any;
+      console.log('USER', payload);
+      req.user = payload;
+      req.token = accessToken;
+    }
     next();
   } catch (error) {
     console.error('checkAuth ERROR', error);
