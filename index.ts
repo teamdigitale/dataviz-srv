@@ -47,10 +47,10 @@ app.get("/seed", (req, res) => {
 });
 */
 
-app.use('/auth', authRouter as Router);
-app.use('/charts', chartRouter as Router);
-app.use('/dashboards', dashRouter as Router);
-app.use('/hints', suggestionsRouter as Router);
+app.use('/api/auth', authRouter as Router);
+app.use('/api/charts', chartRouter as Router);
+app.use('/api/dashboards', dashRouter as Router);
+app.use('/api/hints', suggestionsRouter as Router);
 
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
