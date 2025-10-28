@@ -47,15 +47,11 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           env:
-            - name: NODE_ENV
-              value: {{ .Values.env.NODE_ENV }}
-            - name: PORT
-              value: {{ .Values.env.PORT | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.env.LOG_LEVEL }}
-            - name: DATABASE_URL
-              value: {{ include "dataviz-srv.databaseUrl" . | quote }}
-            - name: POSTGRES_PASSWORD
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   {{- if .Values.postgresql.enabled }}
@@ -65,6 +61,12 @@ spec:
                   name: {{ .Values.externalDatabase.existingSecret | default (printf "%s-db" (include "dataviz-srv.fullname" .)) }}
                   key: {{ .Values.externalDatabase.existingSecretPasswordKey }}
                   {{- end }}
+            - name: DATABASE_URL
+              {{- if .Values.postgresql.enabled }}
+              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DB_PASSWORD)@{{ include "dataviz-srv.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+              {{- else }}
+              value: "postgresql://{{ .Values.externalDatabase.username }}:$(DB_PASSWORD)@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}?sslmode=require"
+              {{- end }}
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

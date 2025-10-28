@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: ghcr.io/teamdigitale/dataviz-srv
-  tag: main
+  tag: k8s-ready
   pullPolicy: IfNotPresent
   pullSecrets:
     - name: ghcr-pull-secret
@@ -11,6 +11,9 @@ env:
   NODE_ENV: production
   PORT: "3003"
   LOG_LEVEL: info
+  HOST_URL: server-service
+  APP_URL: web-service
+  SENDER_EMAIL: dataviz@innovazione.gov.it
 
 resources:
   limits:
@@ -33,7 +36,7 @@ ingress:
   hosts:
     - host: dataviz.innovazione.gov.it
       paths:
-        - path: /
+        - path: /srv
           pathType: Prefix
   tls:
     - secretName: dataviz-prod-tls
@@ -69,10 +72,11 @@ networkPolicy:
   egress:
     enabled: true
     to:
-    - {}
+    - namespaceSelector: {}
+      podSelector: {}
 
 migration:
   enabled: true
   image:
     repository: ghcr.io/teamdigitale/dataviz-srv
-    tag: main
+    tag: k8s-ready

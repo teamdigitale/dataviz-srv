@@ -39,8 +39,9 @@ COPY --from=prerelease /usr/src/app/node_modules ./node_modules
 COPY --from=prerelease /usr/src/app/index.ts .
 COPY --from=prerelease /usr/src/app/lib ./lib
 COPY --from=prerelease /usr/src/app/routes ./routes
-COPY --from=prerelease /usr/src/app/package.json .
+COPY --from=prerelease /usr/src/app/domain ./domain
 COPY --from=prerelease /usr/src/app/prisma ./prisma
+COPY --from=prerelease /usr/src/app/package.json .
 
 # run the app
 USER bun
