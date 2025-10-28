@@ -1,27 +1,22 @@
-import * as z from 'zod';
+import * as z from "zod";
 
 export const paramsWithIdSchema = z.object({
-  id: z.string().min(1, 'Invalid id'),
+  id: z.string().min(1, "Invalid id"),
 });
 
 export type ParamsWithId = z.infer<typeof paramsWithIdSchema>;
 
 export interface ErrorResponse {
   error: {
-    stack?: string;
     message: string;
+    stack?: string;
   };
 }
 
-export interface ServerResponse {
-  data?: any;
-  error?: ErrorResponse;
-}
-
 export interface RequestValidators {
-  params?: z.AnyZodObject;
-  body?: z.AnyZodObject;
-  query?: z.AnyZodObject;
+  params?: any;
+  body?: any;
+  query?: any;
 }
 
 export interface TokensResponseInterface {
