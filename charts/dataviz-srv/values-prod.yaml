@@ -1,0 +1,78 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/teamdigitale/dataviz-srv
+  tag: main
+  pullPolicy: IfNotPresent
+  pullSecrets:
+    - name: ghcr-pull-secret
+
+env:
+  NODE_ENV: production
+  PORT: "3003"
+  LOG_LEVEL: info
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: dataviz.innovazione.gov.it
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: dataviz-prod-tls
+      hosts:
+        - dataviz.innovazione.gov.it
+
+postgresql:
+  enabled: false
+
+externalDatabase:
+  host: developersitalia-prod.postgres.database.azure.com
+  port: 5432
+  username: datavizsrv
+  database: datavizsrv
+  existingSecret: dataviz-db-credentials
+  existingSecretPasswordKey: password
+
+secrets:
+  existingSecret: dataviz-app-secrets
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+networkPolicy:
+  enabled: true
+  ingress:
+    enabled: true
+    from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egress:
+    enabled: true
+    to:
+    - {}
+
+migration:
+  enabled: true
+  image:
+    repository: ghcr.io/teamdigitale/dataviz-srv
+    tag: main
