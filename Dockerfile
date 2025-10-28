@@ -40,6 +40,7 @@ COPY --from=prerelease /usr/src/app/index.ts .
 COPY --from=prerelease /usr/src/app/lib ./lib
 COPY --from=prerelease /usr/src/app/routes ./routes
 COPY --from=prerelease /usr/src/app/package.json .
+COPY --from=prerelease /usr/src/app/prisma ./prisma
 
 # run the app
 USER bun
