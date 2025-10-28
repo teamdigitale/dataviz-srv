@@ -54,9 +54,7 @@ spec:
           image: "{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag | default .Chart.AppVersion }}"
           command: ["npx", "prisma", "migrate", "deploy"]
           env:
-            - name: DATABASE_URL
-              value: {{ include "dataviz-srv.databaseUrl" . | quote }}
-            - name: POSTGRES_PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   {{- if .Values.postgresql.enabled }}
@@ -66,6 +64,12 @@ spec:
                   name: {{ .Values.externalDatabase.existingSecret | default (printf "%s-db" (include "dataviz-srv.fullname" .)) }}
                   key: {{ .Values.externalDatabase.existingSecretPasswordKey }}
                   {{- end }}
+            - name: DATABASE_URL
+              {{- if .Values.postgresql.enabled }}
+              value: "postgresql://{{ .Values.postgresql.auth.username }}:$(DB_PASSWORD)@{{ include "dataviz-srv.fullname" . }}-postgresql:5432/{{ .Values.postgresql.auth.database }}"
+              {{- else }}
+              value: "postgresql://{{ .Values.externalDatabase.username }}:$(DB_PASSWORD)@{{ .Values.externalDatabase.host }}:{{ .Values.externalDatabase.port }}/{{ .Values.externalDatabase.database }}?sslmode=require"
+              {{- end }}
           resources:
             {{- toYaml .Values.migration.resources | nindent 12 }}
           {{- if .Values.securityContext.enabled }}
