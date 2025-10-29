@@ -163,3 +163,4 @@ k8s/
 *.yaml.backup
 charts/dataviz-srv/charts
 charts/dataviz-srv/Chart.lock
+charts/dataviz-srv/values-*.y*ml
