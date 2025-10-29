@@ -10,6 +10,7 @@ LICENSE
 .vscode
 .devcontainer
 Makefile
+charts/
 helm-charts/
 helm/
 k8s/

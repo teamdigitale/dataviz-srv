@@ -1,6 +1,5 @@
 # Development files
-values-dev.yaml
-values-staging.yaml
+values-*
 README.md
 
 # Git files
