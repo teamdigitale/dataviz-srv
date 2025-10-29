@@ -29,8 +29,8 @@ spec:
       http:
         paths:
           {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
+          - path: {{ if $.Values.ingress.rewrite.enabled }}{{ .path }}(/|$)(.*){{ else }}{{ .path }}{{ end }}
+            pathType: {{ if $.Values.ingress.rewrite.enabled }}ImplementationSpecific{{ else }}{{ .pathType }}{{ end }}
             backend:
               service:
                 name: {{ include "dataviz-srv.fullname" $ }}
